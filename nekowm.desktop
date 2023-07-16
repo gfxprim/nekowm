@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=nekowm
+GenericName=Window Manager
+Version=1.0
+Comment=A GFXprim window manager
+Exec=nekowm
+Icon=/usr/share/nekowm/nekowm.png
+Terminal=false
+Type=Application
+Categories=System;Core;;
