@@ -14,6 +14,8 @@
 #include <backends/gp_proxy_shm.h>
 #include <backends/gp_proxy_cli.h>
 
+#include "keybindings.h"
+
 static gp_backend *backend;
 static const char *backend_opts = "x11";
 static struct gp_proxy_shm *shm;
@@ -146,22 +148,21 @@ static int backend_event(struct gp_fd *self, struct pollfd *pfd)
 	while ((ev = gp_backend_poll_event(b))) {
 		switch (ev->type) {
 		case GP_EV_KEY:
-			if (!gp_ev_key_pressed(ev, GP_KEY_LEFT_CTRL) &&
-			    !gp_ev_key_pressed(ev, GP_KEY_RIGHT_CTRL))
+			if (!gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
 				goto to_cli;
 
 			if (ev->code != GP_EV_KEY_DOWN)
 				goto to_cli;
 
 			switch (ev->val) {
-			case GP_KEY_ESC:
+			case NEKO_KEYS_EXIT:
 				do_exit();
 			break;
-			case GP_KEY_Q:
+			case NEKO_KEYS_QUIT:
 				if (cli_shown)
 					gp_proxy_send(cli_shown->fd, GP_PROXY_EXIT, NULL);
 			break;
-			case GP_KEY_L:
+			case NEKO_KEYS_LIST_APPS:
 				hide_client();
 				redraw();
 			break;
