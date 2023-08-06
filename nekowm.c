@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: GPL-2.1-or-later
+//SPDX-License-Identifier: GPL-2.0-or-later
 /*
 
    Copyright (c) 2019-2023 Cyril Hrubis <metan@ucw.cz>
@@ -16,33 +16,44 @@
 
 #include "keybindings.h"
 
+#include "neko_ctx.h"
+#include "neko_view.h"
+#include "neko_app_launcher.h"
+
 static gp_backend *backend;
 static const char *backend_opts = "x11";
 static struct gp_proxy_shm *shm;
 static struct gp_proxy_cli *clients;
 static struct gp_proxy_cli *cli_shown;
 
-static gp_pixel bg;
-static gp_pixel fg;
+static neko_view main_view;
 
-static void redraw(void)
+enum view_shows {
+	VIEW_RUNNING_APPS,
+	VIEW_APP_LAUNCHER,
+	VIEW_APP,
+};
+
+static enum view_shows main_view_shows = VIEW_RUNNING_APPS;
+
+static void redraw_running_apps(void)
 {
 	struct gp_proxy_cli *i;
-	gp_fill(backend->pixmap, bg);
+	gp_fill(backend->pixmap, ctx.col_bg);
 
 	gp_coord y = 20;
 	gp_coord x = 20;
 	gp_size spacing = 20;
 	int n = 0;
 
-	gp_print(backend->pixmap, NULL, x, y, GP_ALIGN_RIGHT|GP_VALIGN_BOTTOM,
-	         fg, bg, "Connected clients");
+	gp_print(backend->pixmap, ctx.font, x, y, GP_ALIGN_RIGHT|GP_VALIGN_BOTTOM,
+	         ctx.col_fg, ctx.col_bg, "Connected clients");
 
 	y += spacing;
 
 	for (i = clients; i; i = i->next) {
-		gp_print(backend->pixmap, NULL, x, y, GP_ALIGN_RIGHT|GP_VALIGN_BOTTOM,
-			 fg, bg, "%i: '%s'", n++, i->name);
+		gp_print(backend->pixmap, ctx.font, x, y, GP_ALIGN_RIGHT|GP_VALIGN_BOTTOM,
+			 ctx.col_fg, ctx.col_bg, "%i: '%s'", n++, i->name);
 		y += spacing;
 	}
 
@@ -138,12 +149,9 @@ static void resize_shown_client(void)
 	gp_proxy_send(cli_shown->fd, GP_PROXY_UNMAP, NULL);
 }
 
-static int backend_event(struct gp_fd *self, struct pollfd *pfd)
+static void backend_event(gp_backend *b)
 {
-	gp_backend *b = self->priv;
 	gp_event *ev;
-
-	(void) pfd;
 
 	while ((ev = gp_backend_poll_event(b))) {
 		switch (ev->type) {
@@ -164,7 +172,11 @@ static int backend_event(struct gp_fd *self, struct pollfd *pfd)
 			break;
 			case NEKO_KEYS_LIST_APPS:
 				hide_client();
-				redraw();
+				redraw_running_apps();
+			break;
+			case NEKO_KEYS_APP_LAUNCHER:
+				neko_app_launcher_show(&main_view);
+				main_view_shows = VIEW_APP_LAUNCHER;
 			break;
 			case GP_KEY_1 ... GP_KEY_9:
 				show_client(ev->val - GP_KEY_1 + 1);
@@ -182,36 +194,39 @@ static int backend_event(struct gp_fd *self, struct pollfd *pfd)
 			break;
 			case GP_EV_SYS_RESIZE:
 				gp_backend_resize_ack(b);
-				redraw();
+				redraw_running_apps();
 				gp_backend_flip(b);
 				resize_shown_client();
-				return 0;
+				return;
 			break;
 			}
 		break;
 		}
 to_cli:
-		if (cli_shown)
-			gp_proxy_cli_event(cli_shown, ev);
-		else
-			redraw();
+		switch (main_view_shows) {
+		case VIEW_APP_LAUNCHER:
+			if (neko_app_launcher_event(ev, &main_view))
+				main_view_shows = VIEW_RUNNING_APPS;
+		break;
+		default:
+			if (cli_shown)
+				gp_proxy_cli_event(cli_shown, ev);
+			else
+				redraw_running_apps();
+		break;
+		}
 	}
-
-
-	return 0;
 }
 
-struct gp_fds fds = GP_FDS_INIT;
-
-static int client_event(struct gp_fd *self, struct pollfd *pfd)
+static int client_event(struct gp_fd *self)
 {
 	if (gp_proxy_cli_read(self->priv, &cli_ops)) {
 		gp_proxy_cli_rem(&clients, self->priv);
-		close(pfd->fd);
+		close(self->pfd->fd);
 
 		if (self->priv == cli_shown) {
 			cli_shown = NULL;
-			redraw();
+			redraw_running_apps();
 		}
 
 		return 1;
@@ -220,37 +235,33 @@ static int client_event(struct gp_fd *self, struct pollfd *pfd)
 	return 0;
 }
 
-static int client_add(int fd)
+static int client_add(gp_backend *backend, int fd)
 {
 	struct gp_proxy_cli *cli = gp_proxy_cli_add(&clients, fd);
 
 	if (!cli)
 		goto err0;
 
-	if (gp_fds_add(&fds, fd, POLLIN, client_event, cli))
-		goto err1;
+	gp_backend_fds_add(backend, fd, POLLIN, client_event, cli);
 
 	return 0;
-err1:
-	gp_proxy_cli_rem(&clients, cli);
 err0:
 	close(fd);
 	return 1;
 }
 
-static int server_event(struct gp_fd *self, struct pollfd *pfd)
+static int server_event(struct gp_fd *self)
 {
-	(void) self;
 	int fd;
 
-	while ((fd = accept(pfd->fd, NULL, NULL)) > 0) {
+	while ((fd = accept(self->pfd->fd, NULL, NULL)) > 0) {
 		/*
 		 * Pixel type has to be send first so that backend can return
 		 * from init() function.
 		 */
 		gp_proxy_send(fd, GP_PROXY_PIXEL_TYPE, &backend->pixmap->pixel_type);
 
-		client_add(fd);
+		client_add(self->priv, fd);
 	}
 
 	return 0;
@@ -258,19 +269,23 @@ static int server_event(struct gp_fd *self, struct pollfd *pfd)
 
 static void print_help(const char *name)
 {
-	printf("%s -b backend_options\n", name);
+	printf("%s -b backend_options -f font_family\n", name);
 }
 
 int main(int argc, char *argv[])
 {
 	int opt;
+	const char *font_family = "haxor-narrow-18";
 
 	signal(SIGPIPE, SIG_IGN);
 
-	while ((opt = getopt(argc, argv, "b:h")) != -1) {
+	while ((opt = getopt(argc, argv, "b:f:h")) != -1) {
 	switch (opt) {
 		case 'b':
 			backend_opts = optarg;
+		break;
+		case 'f':
+			font_family = optarg;
 		break;
 		case 'h':
 			print_help(argv[0]);
@@ -280,17 +295,18 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	backend = gp_backend_init(backend_opts, "neko");
+	backend = gp_backend_init(backend_opts, 0, 0, "NekoWM");
 	if (!backend) {
 		fprintf(stderr, "Failed to initialize backend\n");
 		return 1;
 	}
 
-	bg = 0;
-	fg = 0xffffff;
-
 	gp_size w = backend->pixmap->w;
 	gp_size h = backend->pixmap->h;
+
+	neko_ctx_init(backend, font_family);
+	neko_view_init(&main_view, backend, 0, 0, w, h);
+	neko_app_launcher_init();
 
 	shm = gp_proxy_shm_init("/dev/shm/.proxy_backend", w, h, backend->pixmap->pixel_type);
 	if (!shm) {
@@ -298,16 +314,16 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	redraw();
-
-	gp_fds_add(&fds, backend->fd, POLLIN, backend_event, backend);
+	redraw_running_apps();
 
 	int server_fd = gp_proxy_server_init(NULL);
 
-	gp_fds_add(&fds, server_fd, POLLIN, server_event, NULL);
+	gp_backend_fds_add(backend, server_fd, POLLIN, server_event, backend);
 
-	for (;;)
-		gp_fds_poll(&fds, -1);
+	for (;;) {
+		gp_backend_wait(backend);
+		backend_event(backend);
+	}
 
 	return 0;
 }

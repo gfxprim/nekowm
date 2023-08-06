@@ -1,7 +1,8 @@
 CFLAGS?=-W -Wall -Wextra -O2 -ggdb
 CFLAGS+=$(shell gfxprim-config --cflags)
 BIN=nekowm
-$(BIN): LDLIBS=-lgfxprim $(shell gfxprim-config --libs-backends)
+#TODO: Move text_fit to core to avoid linking against widgets
+$(BIN): LDLIBS=-lgfxprim $(shell gfxprim-config --libs-backends) -lgfxprim-widgets
 SOURCES=$(wildcard *.c)
 DEP=$(SOURCES:.c=.dep)
 OBJ=$(SOURCES:.c=.o)
