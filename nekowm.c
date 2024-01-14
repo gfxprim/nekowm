@@ -21,7 +21,7 @@
 #include "neko_app_launcher.h"
 
 static gp_backend *backend;
-static const char *backend_opts = "x11";
+static const char *backend_opts = NULL;
 static struct gp_proxy_shm *shm;
 static gp_dlist clients;
 static gp_proxy_cli *cli_shown;
