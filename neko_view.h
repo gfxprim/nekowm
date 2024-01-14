@@ -5,8 +5,8 @@
 
  */
 
-#ifndef NEKO_VIEW__
-#define NEKO_VIEW__
+#ifndef NEKO_VIEW
+#define NEKO_VIEW
 
 #include <core/gp_core.h>
 #include <backends/gp_types.h>
@@ -27,9 +27,11 @@ void neko_view_update_rect(neko_view *self, gp_size w, gp_size h);
 
 void neko_view_flip(neko_view *self);
 
+void neko_view_resize(neko_view *self, gp_size w, gp_size h);
+
 static inline gp_pixmap *neko_view_pixmap(neko_view *self)
 {
 	return &(self->pixmap);
 }
 
-#endif /* NEKO_VIEW__ */
+#endif /* NEKO_VIEW */

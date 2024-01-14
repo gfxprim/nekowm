@@ -23,6 +23,16 @@ void neko_view_update_rect(neko_view *self, gp_size w, gp_size h)
 void neko_view_flip(neko_view *self)
 {
 	gp_backend_update_rect_xywh(self->backend, self->x, self->y, self->w, self->h);
+
+	gp_sub_pixmap(self->backend->pixmap, &self->pixmap, self->x, self->y, self->w, self->h);
+}
+
+void neko_view_resize(neko_view *self, gp_size w, gp_size h)
+{
+	self->w = w;
+	self->h = h;
+
+	gp_sub_pixmap(self->backend->pixmap, &self->pixmap, self->x, self->y, self->w, self->h);
 }
 
 void neko_view_init(neko_view *self, gp_backend *backend,

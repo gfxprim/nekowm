@@ -49,7 +49,7 @@ void neko_app_launcher_show(neko_view *view)
 {
 	gp_pixmap *pix = neko_view_pixmap(view);
 	gp_size ascent = gp_text_ascent(ctx.font);
-
+	printf("%i %i %i %i\n", view->x, view->y, view->w, view->h);
 	gp_fill(pix, ctx.col_bg);
 
 	unsigned int i = app_offset;
