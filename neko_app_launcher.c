@@ -29,7 +29,7 @@ static unsigned int app_selected = 0;
 
 void neko_app_launcher_init(void)
 {
-	apps = gp_vec_new(2, sizeof(struct apps));
+	apps = gp_vec_new(3, sizeof(struct apps));
 
 	strcpy(apps[0].name, "Termini");
 	strcpy(apps[0].cmdline, "termini -b proxy");
@@ -38,6 +38,11 @@ void neko_app_launcher_init(void)
 	strcpy(apps[1].name, "Dictionary");
 	strcpy(apps[1].cmdline, "gpdict -b proxy");
 	apps[1].icon = NULL;
+
+
+	strcpy(apps[2].name, "Music Player");
+	strcpy(apps[2].cmdline, "gpdict -b proxy");
+	apps[2].icon = NULL;
 }
 
 void neko_app_launcher_exit(void)
