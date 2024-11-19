@@ -14,7 +14,7 @@ all: $(BIN) $(DEP)
 
 $(BIN): $(OBJ)
 
--include: $(DEP)
+-include $(DEP)
 
 install:
 	install -d $(DESTDIR)/usr/bin/
