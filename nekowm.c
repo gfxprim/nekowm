@@ -103,11 +103,6 @@ static void on_unmap(gp_proxy_cli *self)
 	}
 }
 
-struct gp_proxy_cli_ops cli_ops = {
-	.update = shm_update,
-	.on_unmap = on_unmap,
-};
-
 static void hide_client(void)
 {
 	if (!cli_shown)
@@ -229,22 +224,52 @@ to_cli:
 	}
 }
 
+static void err_rem_cli(gp_fd *self)
+{
+	gp_backend_poll_rem(backend, self);
+	close(self->fd);
+	gp_proxy_cli_rem(&clients, self->priv);
+
+	if (!cli_shown || self->priv == cli_shown) {
+		cli_shown = NULL;
+		redraw_running_apps();
+	}
+}
+
 static enum gp_poll_event_ret client_event(gp_fd *self)
 {
-	if (gp_proxy_cli_read(self->priv, &cli_ops)) {
-		gp_backend_poll_rem(backend, self);
+	gp_proxy_msg *msg;
 
-		close(self->fd);
-
-		if (self->priv == cli_shown) {
-			cli_shown = NULL;
-			redraw_running_apps();
-		}
-
-		gp_proxy_cli_rem(&clients, self->priv);
+	if (gp_proxy_cli_read(self->priv)) {
+		err_rem_cli(self);
+		return 0;
 	}
 
-	return 0;
+	for (;;) {
+		if (gp_proxy_cli_msg(self->priv, &msg)) {
+			err_rem_cli(self);
+			return 0;
+		}
+
+		if (!msg)
+			return 0;
+
+		switch (msg->type) {
+		case GP_PROXY_UNMAP:
+			on_unmap(self->priv);
+		break;
+		case GP_PROXY_UPDATE:
+			shm_update(self->priv,
+			           msg->rect.rect.x, msg->rect.rect.y,
+			           msg->rect.rect.w, msg->rect.rect.h);
+		break;
+		case GP_PROXY_NAME:
+			if (!cli_shown)
+				redraw_running_apps();
+		break;
+		}
+
+	}
 }
 
 static int client_add(gp_backend *backend, int fd)
