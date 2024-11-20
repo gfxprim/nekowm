@@ -14,72 +14,28 @@
 #include <backends/gp_proxy_shm.h>
 #include <backends/gp_proxy_cli.h>
 
-#include "keybindings.h"
-
+#include "nekowm.h"
+#include "neko_keybindings.h"
 #include "neko_ctx.h"
 #include "neko_view.h"
-#include "neko_app_launcher.h"
+#include "neko_view_app_launcher.h"
+#include "neko_view_running_apps.h"
+#include "neko_view_app.h"
 
 static gp_backend *backend;
 static const char *backend_opts = NULL;
-static struct gp_proxy_shm *shm;
-static gp_dlist clients;
-static gp_proxy_cli *cli_shown;
 
-static neko_view main_view;
+/** @brief A list of application connected to the proxy backend. */
+gp_dlist apps_list;
 
-enum view_shows {
-	VIEW_RUNNING_APPS,
-	VIEW_APP_LAUNCHER,
-	VIEW_APP,
+static void view_child_exit(neko_view *self);
+
+static neko_view main_view = {
+	.child_exit = view_child_exit,
 };
 
-static enum view_shows main_view_shows = VIEW_RUNNING_APPS;
-
-static void redraw_running_apps(void)
-{
-	gp_dlist_head *i;
-	gp_fill(backend->pixmap, ctx.col_bg);
-
-	gp_coord y = 20;
-	gp_coord x = 20;
-	gp_size spacing = 20;
-	int n = 0;
-
-	gp_print(backend->pixmap, ctx.font, x, y, GP_ALIGN_RIGHT|GP_VALIGN_BOTTOM,
-	         ctx.col_fg, ctx.col_bg, "Connected clients");
-
-	y += spacing;
-
-	GP_LIST_FOREACH(&clients, i) {
-		gp_proxy_cli *cli = GP_LIST_ENTRY(i, gp_proxy_cli, head);
-		gp_print(backend->pixmap, ctx.font, x, y, GP_ALIGN_RIGHT|GP_VALIGN_BOTTOM,
-			 ctx.col_fg, ctx.col_bg, "%i: '%s'", n++, cli->name);
-		y += spacing;
-	}
-
-	gp_backend_flip(backend);
-}
-
-static void shm_update(gp_proxy_cli *self, gp_coord x, gp_coord y, gp_size w, gp_size h)
-{
-	gp_size screen_h = backend->pixmap->h;
-
-	if (self != cli_shown)
-		return;
-
-	if (h > screen_h) {
-		GP_WARN("Invalid height");
-		h = screen_h;
-	}
-
-	printf("%i %i %u %u\n", x, y, w, h);
-
-	//TODO: Check SIZE!!!
-	gp_blit_xywh_clipped(&shm->pixmap, x, y, w, h, backend->pixmap, x, y);
-
-	gp_backend_update_rect_xywh(backend, x, y, w, h);
-}
+static neko_view_child *app_launcher;
+static neko_view_child *running_apps;
 
 static void do_exit(void)
 {
@@ -87,69 +43,9 @@ static void do_exit(void)
 	exit(0);
 }
 
-/*
- * App resize handler, we have to wait for the client to unmap the memory
- * before we resize it, hence we have to wait for the application to ack the resize.
- */
-static void on_unmap(gp_proxy_cli *self)
+void nekowm_poll_rem(gp_fd *self)
 {
-	if (self == cli_shown) {
-		if (gp_proxy_shm_resize(shm, backend->pixmap->w, backend->pixmap->h) < 0)
-			do_exit();
-
-		gp_proxy_cli_send(cli_shown, GP_PROXY_MAP, &shm->path);
-		gp_proxy_cli_send(cli_shown, GP_PROXY_PIXMAP, &shm->pixmap);
-		gp_proxy_cli_send(cli_shown, GP_PROXY_SHOW, NULL);
-	}
-}
-
-static void hide_client(void)
-{
-	if (!cli_shown)
-		return;
-
-	gp_proxy_cli_hide(cli_shown);
-
-	cli_shown = NULL;
-}
-
-static void show_client(int pos)
-{
-	int n = 0;
-	gp_dlist_head *i;
-
-	GP_LIST_FOREACH(&clients, i) {
-		if (n >= pos)
-			break;
-		n++;
-	}
-
-	if (!i)
-		return;
-
-	gp_proxy_cli *cli = GP_LIST_ENTRY(i, gp_proxy_cli, head);
-
-	hide_client();
-
-	struct gp_proxy_coord cur_pos = {
-		.x = backend->event_queue->state.cursor_x,
-		.y = backend->event_queue->state.cursor_y,
-	};
-
-	gp_proxy_cli_show(cli, shm, &cur_pos);
-
-	cli_shown = cli;
-}
-
-static void resize_shown_client(void)
-{
-	if (!cli_shown) {
-		if (gp_proxy_shm_resize(shm, backend->pixmap->w, backend->pixmap->h) < 0)
-			do_exit();
-		return;
-	}
-
-	gp_proxy_cli_send(cli_shown, GP_PROXY_UNMAP, NULL);
+	gp_backend_poll_rem(backend, self);
 }
 
 static void backend_event(gp_backend *b)
@@ -160,32 +56,24 @@ static void backend_event(gp_backend *b)
 		switch (ev->type) {
 		case GP_EV_KEY:
 			if (!gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
-				goto to_cli;
+				break;
 
 			if (ev->code != GP_EV_KEY_DOWN)
-				goto to_cli;
+				break;
 
 			switch (ev->val) {
 			case NEKO_KEYS_EXIT:
 				do_exit();
 			break;
-			case NEKO_KEYS_QUIT:
-				if (cli_shown)
-					gp_proxy_cli_send(cli_shown, GP_PROXY_EXIT, NULL);
-			break;
 			case NEKO_KEYS_LIST_APPS:
-				hide_client();
-				redraw_running_apps();
+				neko_view_show_child(&main_view, running_apps);
+				return;
 			break;
 			case NEKO_KEYS_APP_LAUNCHER:
-				neko_app_launcher_show(&main_view);
-				main_view_shows = VIEW_APP_LAUNCHER;
+				neko_view_show_child(&main_view, app_launcher);
+				return;
 			break;
-			case GP_KEY_1 ... GP_KEY_9:
-				show_client(ev->val - GP_KEY_1 + 1);
-			break;
-			case GP_KEY_0:
-				show_client(0);
+			default:
 			break;
 			}
 
@@ -197,90 +85,34 @@ static void backend_event(gp_backend *b)
 			break;
 			case GP_EV_SYS_RESIZE:
 				gp_backend_resize_ack(b);
-
 				neko_view_resize(&main_view, ev->sys.w, ev->sys.h);
-
-				redraw_running_apps();
-				gp_backend_flip(b);
-				resize_shown_client();
 				return;
-			break;
 			}
 		break;
-		}
-to_cli:
-		switch (main_view_shows) {
-		case VIEW_APP_LAUNCHER:
-			if (neko_app_launcher_event(ev, &main_view))
-				main_view_shows = VIEW_RUNNING_APPS;
-		break;
 		default:
-			if (cli_shown)
-				gp_proxy_cli_event(cli_shown, ev);
-			else
-				redraw_running_apps();
 		break;
 		}
+
+		neko_view_event(&main_view, ev);
 	}
 }
 
-static void err_rem_cli(gp_fd *self)
+static void view_child_exit(neko_view *self)
 {
-	gp_backend_poll_rem(backend, self);
-	close(self->fd);
-	gp_proxy_cli_rem(&clients, self->priv);
-
-	if (!cli_shown || self->priv == cli_shown) {
-		cli_shown = NULL;
-		redraw_running_apps();
-	}
-}
-
-static enum gp_poll_event_ret client_event(gp_fd *self)
-{
-	gp_proxy_msg *msg;
-
-	if (gp_proxy_cli_read(self->priv)) {
-		err_rem_cli(self);
-		return 0;
-	}
-
-	for (;;) {
-		if (gp_proxy_cli_msg(self->priv, &msg)) {
-			err_rem_cli(self);
-			return 0;
-		}
-
-		if (!msg)
-			return 0;
-
-		switch (msg->type) {
-		case GP_PROXY_UNMAP:
-			on_unmap(self->priv);
-		break;
-		case GP_PROXY_UPDATE:
-			shm_update(self->priv,
-			           msg->rect.rect.x, msg->rect.rect.y,
-			           msg->rect.rect.w, msg->rect.rect.h);
-		break;
-		case GP_PROXY_NAME:
-			if (!cli_shown)
-				redraw_running_apps();
-		break;
-		}
-
-	}
+	neko_view_show_child(self, running_apps);
 }
 
 static int client_add(gp_backend *backend, int fd)
 {
-	gp_proxy_cli *cli = gp_proxy_cli_add(&clients, fd);
+	gp_proxy_cli *cli = gp_proxy_cli_add(&apps_list, fd);
 
 	if (!cli)
 		goto err0;
 
-	cli->fd.event = client_event;
-	cli->fd.priv = cli;
+	neko_view_child *app = neko_view_app_init(cli);
+
+	cli->fd.event = neko_view_app_event;
+	cli->fd.priv = app;
 
 	gp_backend_poll_add(backend, &cli->fd);
 
@@ -346,15 +178,11 @@ int main(int argc, char *argv[])
 
 	neko_ctx_init(backend, font_family);
 	neko_view_init(&main_view, backend, 0, 0, w, h);
-	neko_app_launcher_init();
 
-	shm = gp_proxy_shm_init("/dev/shm/.proxy_backend", w, h, backend->pixmap->pixel_type);
-	if (!shm) {
-		gp_backend_exit(backend);
-		return 1;
-	}
+	app_launcher = neko_app_launcher_init();
+	running_apps = neko_running_apps_init();
 
-	redraw_running_apps();
+	neko_view_show_child(&main_view, running_apps);
 
 	int fd = gp_proxy_server_init(NULL);
 	gp_fd server_fd = {
