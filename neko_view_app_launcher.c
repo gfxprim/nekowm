@@ -24,7 +24,7 @@ struct apps {
 
 static struct apps *apps;
 static unsigned int apps_refcnt;
-static const struct neko_view_child_ops app_launcher_ops;
+static const struct neko_view_slot_ops app_launcher_ops;
 
 struct app_launcher {
 	unsigned int app_offset;
@@ -38,7 +38,7 @@ static void load_app_list(void)
 	apps = gp_vec_new(3, sizeof(struct apps));
 
 	strcpy(apps[0].name, "Termini");
-	strcpy(apps[0].cmdline, "termini -b proxy");
+	strcpy(apps[0].cmdline, "termini -r -b proxy");
 	apps[0].icon = NULL;
 
 	strcpy(apps[1].name, "Dictionary");
@@ -50,16 +50,19 @@ static void load_app_list(void)
 	apps[2].icon = NULL;
 }
 
-neko_view_child *neko_app_launcher_init(void)
+neko_view_slot *neko_app_launcher_init(void)
 {
 	if (!apps)
 		load_app_list();
 
-	neko_view_child *ret = malloc(sizeof(neko_view_child) + sizeof(struct app_launcher));
+	neko_view_slot *ret = malloc(sizeof(neko_view_slot) + sizeof(struct app_launcher));
 	if (!ret) {
-		gp_vec_free(apps);
+		//TODO refcounting!
+		//gp_vec_free(apps);
 		return NULL;
 	}
+
+	memset(ret, 0, sizeof(*ret));
 
 	apps_refcnt++;
 
@@ -73,7 +76,7 @@ neko_view_child *neko_app_launcher_init(void)
 	return ret;
 }
 
-void neko_app_launcher_exit(struct neko_view_child *self)
+void neko_app_launcher_exit(struct neko_view_slot *self)
 {
 	if (--apps_refcnt == 0)
 		gp_vec_free(apps);
@@ -83,7 +86,7 @@ void neko_app_launcher_exit(struct neko_view_child *self)
 
 void neko_app_launcher_show(neko_view *view)
 {
-	struct app_launcher *app_launcher = APP_LAUNCHER_PRIV(view->child);
+	struct app_launcher *app_launcher = APP_LAUNCHER_PRIV(view->slot);
 	gp_pixmap *pix = neko_view_pixmap(view);
 	gp_size ascent = gp_text_ascent(ctx.font);
 
@@ -180,7 +183,7 @@ static void selected_down(neko_view *view, struct app_launcher *app_launcher)
 
 void neko_app_launcher_event(neko_view *view, gp_event *ev)
 {
-	struct app_launcher *app_launcher = APP_LAUNCHER_PRIV(view->child);
+	struct app_launcher *app_launcher = APP_LAUNCHER_PRIV(view->slot);
 
 	switch (ev->type) {
 	case GP_EV_KEY:
@@ -190,7 +193,7 @@ void neko_app_launcher_event(neko_view *view, gp_event *ev)
 		switch (ev->val) {
 		case GP_KEY_ENTER:
 			run_selected_app(app_launcher);
-			neko_view_child_exit(view);
+			//neko_view_slot_exit(view);
 		break;
 		case GP_KEY_DOWN:
 			selected_down(view, app_launcher);
@@ -199,14 +202,15 @@ void neko_app_launcher_event(neko_view *view, gp_event *ev)
 			selected_up(view, app_launcher);
 		break;
 		case GP_KEY_ESC:
-			neko_view_child_exit(view);
+			neko_view_slot_exit(view);
 		break;
 		}
 	break;
 	}
 }
 
-static const struct neko_view_child_ops app_launcher_ops = {
+static const struct neko_view_slot_ops app_launcher_ops = {
 	.show = neko_app_launcher_show,
+	.repaint = neko_app_launcher_show,
 	.event = neko_app_launcher_event,
 };

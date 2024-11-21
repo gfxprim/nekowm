@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: GPL-2.0-or-later
 /*
 
-   Copyright (c) 2019-2023 Cyril Hrubis <metan@ucw.cz>
+   Copyright (c) 2019-2024 Cyril Hrubis <metan@ucw.cz>
 
  */
 
@@ -14,7 +14,6 @@
 #include <backends/gp_proxy_shm.h>
 #include <backends/gp_proxy_cli.h>
 
-#include "nekowm.h"
 #include "neko_keybindings.h"
 #include "neko_ctx.h"
 #include "neko_view.h"
@@ -28,14 +27,14 @@ static const char *backend_opts = NULL;
 /** @brief A list of application connected to the proxy backend. */
 gp_dlist apps_list;
 
-static void view_child_exit(neko_view *self);
+#define NEKO_MAIN_VIEWS 4
+static neko_view main_views[NEKO_MAIN_VIEWS];
+static size_t cur_view = 1;
 
-static neko_view main_view = {
-	.child_exit = view_child_exit,
-};
+static neko_view left_view;
+static neko_view right_view;
 
-static neko_view_child *app_launcher;
-static neko_view_child *running_apps;
+static neko_view_slot *app_launcher;
 
 static void do_exit(void)
 {
@@ -43,13 +42,9 @@ static void do_exit(void)
 	exit(0);
 }
 
-void nekowm_poll_rem(gp_fd *self)
-{
-	gp_backend_poll_rem(backend, self);
-}
-
 static void backend_event(gp_backend *b)
 {
+	unsigned int i;
 	gp_event *ev;
 
 	while ((ev = gp_backend_poll_event(b))) {
@@ -66,12 +61,26 @@ static void backend_event(gp_backend *b)
 				do_exit();
 			break;
 			case NEKO_KEYS_LIST_APPS:
-				neko_view_show_child(&main_view, running_apps);
+			//	neko_view_show_child(&main_views[cur_view], running_apps);
 				return;
 			break;
 			case NEKO_KEYS_APP_LAUNCHER:
-				neko_view_show_child(&main_view, app_launcher);
+			//	neko_view_show_child(&main_views[cur_view], app_launcher);
 				return;
+			break;
+			case NEKO_KEYS_VIRT_SCREENS_LEFT:
+				if (cur_view != 0) {
+					neko_view_hide(&main_views[cur_view]);
+					cur_view--;
+					neko_view_show(&main_views[cur_view]);
+				}
+			break;
+			case NEKO_KEYS_VIRT_SCREENS_RIGHT:
+				if (cur_view < NEKO_MAIN_VIEWS-1) {
+					neko_view_hide(&main_views[cur_view]);
+					cur_view++;
+					neko_view_show(&main_views[cur_view]);
+				}
 			break;
 			default:
 			break;
@@ -85,7 +94,12 @@ static void backend_event(gp_backend *b)
 			break;
 			case GP_EV_SYS_RESIZE:
 				gp_backend_resize_ack(b);
-				neko_view_resize(&main_view, ev->sys.w, ev->sys.h);
+
+				for (i = 0; i < NEKO_MAIN_VIEWS; i++)
+					neko_view_resize(&main_views[i], ev->sys.w, ev->sys.h);
+
+				neko_view_repaint(&main_views[cur_view]);
+
 				return;
 			}
 		break;
@@ -93,13 +107,18 @@ static void backend_event(gp_backend *b)
 		break;
 		}
 
-		neko_view_event(&main_view, ev);
+		neko_view_event(&main_views[cur_view], ev);
 	}
 }
 
-static void view_child_exit(neko_view *self)
+/**
+ * @brief Slot empty callback.
+ *
+ * If slot becomes empty put a list of running apps into it.
+ */
+static void slot_exit_running_apps(neko_view *self)
 {
-	neko_view_show_child(self, running_apps);
+	neko_view_slot_put(self, neko_running_apps_init());
 }
 
 static int client_add(gp_backend *backend, int fd)
@@ -109,7 +128,7 @@ static int client_add(gp_backend *backend, int fd)
 	if (!cli)
 		goto err0;
 
-	neko_view_child *app = neko_view_app_init(cli);
+	neko_view_slot *app = neko_view_app_init(cli);
 
 	cli->fd.event = neko_view_app_event;
 	cli->fd.priv = app;
@@ -177,12 +196,30 @@ int main(int argc, char *argv[])
 	gp_size h = backend->pixmap->h;
 
 	neko_ctx_init(backend, font_family);
-	neko_view_init(&main_view, backend, 0, 0, w, h);
 
-	app_launcher = neko_app_launcher_init();
-	running_apps = neko_running_apps_init();
+	unsigned int i;
 
-	neko_view_show_child(&main_view, running_apps);
+	for (i = 0; i < NEKO_MAIN_VIEWS; i++) {
+		neko_view_init(&main_views[i], 0, 0, w, h);
+		main_views[i].slot_exit = slot_exit_running_apps;
+	}
+
+	main_views[0].slot = neko_app_launcher_init();
+
+	neko_subviews_init(&left_view, &right_view, &main_views[3]);
+
+	neko_view_slot_put(&left_view, neko_running_apps_init());
+	left_view.slot_exit = slot_exit_running_apps;
+	neko_view_slot_put(&right_view, neko_running_apps_init());
+	right_view.slot_exit = slot_exit_running_apps;
+
+	neko_view_slot_put(&main_views[1], neko_running_apps_init());
+	main_views[1].slot_exit = slot_exit_running_apps;
+
+	neko_view_slot_put(&main_views[2], neko_running_apps_init());
+	main_views[2].slot_exit = slot_exit_running_apps;
+
+	neko_view_show(&main_views[cur_view]);
 
 	int fd = gp_proxy_server_init(NULL);
 	gp_fd server_fd = {

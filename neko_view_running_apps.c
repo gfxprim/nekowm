@@ -31,7 +31,7 @@ static void redraw_running_apps(neko_view *view)
 
 	y += spacing;
 
-	GP_VEC_FOREACH(neko_apps, neko_view_child *, child) {
+	GP_VEC_FOREACH(neko_apps, neko_view_slot *, child) {
 		gp_proxy_cli *cli = neko_view_app_cli(*child);
 		gp_print(pixmap, ctx.font, x, y, GP_ALIGN_RIGHT|GP_VALIGN_BOTTOM,
 			 ctx.col_fg, ctx.col_bg, "%i: '%s'", n++, cli->name);
@@ -54,13 +54,15 @@ struct running_apps {
 
 #define RUNNING_APPS_PRIV(self) (struct running_apps*)((self)->priv)
 
-static const neko_view_child_ops running_apps_ops;
+static const neko_view_slot_ops running_apps_ops;
 
-neko_view_child *neko_running_apps_init(void)
+neko_view_slot *neko_running_apps_init(void)
 {
-	neko_view_child *ret = malloc(sizeof(neko_view_child) + sizeof(struct running_apps));
+	neko_view_slot *ret = malloc(sizeof(neko_view_slot) + sizeof(struct running_apps));
 	if (!ret)
 		return NULL;
+
+	memset(ret, 0, sizeof(*ret));
 
 	ret->ops = &running_apps_ops;
 	gp_dlist_push_head(&app_lists, &ret->list);
@@ -73,11 +75,21 @@ void neko_running_apps_changed(void)
 	gp_dlist_head *i;
 
 	GP_LIST_FOREACH(&app_lists, i) {
-		neko_view_child *child = GP_LIST_ENTRY(i, neko_view_child, list);
+		neko_view_slot *slot = GP_LIST_ENTRY(i, neko_view_slot, list);
 
-		if (child->parent)
-			redraw_running_apps(child->parent);
+		if (neko_view_is_shown(slot->view))
+			redraw_running_apps(slot->view);
 	}
+}
+
+static void running_apps_remove(neko_view *view)
+{
+	neko_view_slot *slot = view->slot;
+
+	view->slot = NULL;
+
+	gp_dlist_rem(&app_lists, &slot->list);
+	free(slot);
 }
 
 static void show_client(neko_view *view, size_t i)
@@ -85,7 +97,7 @@ static void show_client(neko_view *view, size_t i)
 	if (i >= gp_vec_len(neko_apps))
 		return;
 
-	neko_view_show_child(view, neko_apps[i]);
+	neko_view_slot_put(view, neko_apps[i]);
 }
 
 void running_apps_event(neko_view *view, gp_event *ev)
@@ -111,9 +123,10 @@ void running_apps_event(neko_view *view, gp_event *ev)
 	}
 }
 
-static const neko_view_child_ops running_apps_ops = {
+static const neko_view_slot_ops running_apps_ops = {
 	.show = redraw_running_apps,
-	.resize = redraw_running_apps,
+	.repaint = redraw_running_apps,
 	.event = running_apps_event,
+	.remove = running_apps_remove,
 };
 

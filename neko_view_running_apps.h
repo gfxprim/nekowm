@@ -13,7 +13,7 @@
  *
  * Displays a list of currently connected applications.
  */
-neko_view_child *neko_running_apps_init(void);
+neko_view_slot *neko_running_apps_init(void);
 
 /**
  * @brief Called when new application has connected or an application has disconnected.

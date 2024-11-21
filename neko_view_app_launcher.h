@@ -15,6 +15,6 @@
 #include <input/gp_types.h>
 #include "neko_view.h"
 
-neko_view_child *neko_app_launcher_init(void);
+neko_view_slot *neko_app_launcher_init(void);
 
 #endif /* NEKO_VIEW_APP_LAUNCHER_H */
