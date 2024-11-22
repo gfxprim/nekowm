@@ -1,0 +1,5 @@
+<map id="neko_view_slot" name="neko_view_slot">
+<area shape="rect" id="node1" title="A view slot content." alt="" coords="20,95,143,121"/>
+<area shape="rect" id="node2" href="$structneko__view.html" title="View a part of a screen." alt="" coords="36,185,127,212"/>
+<area shape="rect" id="node3" href="$structneko__view__slot__ops.html" title="A view slot ops." alt="" coords="5,5,157,32"/>
+</map>
