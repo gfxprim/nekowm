@@ -7,14 +7,15 @@
 
 /**
  * @brief View is an abstraction for a piece of a screen.
+ * @file neko_view.h
  *
  * View can be divided into subviews recursively.
  *
  * Each view has a slot, if slot is not empty the screen is taken over by the
  * slot content.
  */
-#ifndef NEKO_VIEW
-#define NEKO_VIEW
+#ifndef NEKO_VIEW_H
+#define NEKO_VIEW_H
 
 #include <core/gp_core.h>
 #include <backends/gp_types.h>
@@ -22,6 +23,11 @@
 struct neko_view;
 struct neko_view_slot;
 
+/**
+ * @brief A view slot ops.
+ *
+ * Callback to render a slot content.
+ */
 typedef struct neko_view_slot_ops {
 	/** @brief Request child exit. */
 	void (*exit)(struct neko_view_slot *self);
@@ -65,6 +71,11 @@ typedef struct neko_view_slot_ops {
 	void (*resize)(struct neko_view *self);
 } neko_view_slot_ops;
 
+/**
+ * @brief A view slot content.
+ *
+ * Something to be shown in the view on the screen.
+ */
 typedef struct neko_view_slot {
 	/** @brief A neko view child implementation. */
 	const neko_view_slot_ops *ops;
@@ -106,6 +117,7 @@ typedef struct neko_view {
 
 	/** @brief A view may be split into two subviews. */
 	struct neko_view *subviews[2];
+	/** @brief Currently focused subview. */
 	unsigned int focused_subview;
 
 	/** @brief What is shown in the view. */
@@ -215,4 +227,4 @@ void neko_view_show(neko_view *self);
 
 void neko_view_hide(neko_view *self);
 
-#endif /* NEKO_VIEW */
+#endif /* NEKO_VIEW_H */

@@ -1,16 +1,17 @@
 //SPDX-License-Identifier: GPL-2.0-or-later
 /*
 
-   Copyright (c) 2019-2023 Cyril Hrubis <metan@ucw.cz>
+   Copyright (c) 2019-2024 Cyril Hrubis <metan@ucw.cz>
 
  */
 
-/*
- * Configuration.
+/**
+ * @brief Global context, font, colors, backend pointer.
+ * @file neko_ctx.h
  */
 
-#ifndef NEKO_CTX__
-#define NEKO_CTX__
+#ifndef NEKO_CTX_H
+#define NEKO_CTX_H
 
 #include <text/gp_text.h>
 #include <core/gp_types.h>
@@ -31,4 +32,4 @@ extern struct neko_ctx ctx;
 
 void neko_ctx_init(gp_backend *backend, const char *font_family);
 
-#endif /* NEKO_CTX__ */
+#endif /* NEKO_CTX_H */

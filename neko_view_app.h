@@ -2,21 +2,30 @@
 /*
 
    Copyright (c) 2019-2024 Cyril Hrubis <metan@ucw.cz>
-
- */
-
-#ifndef NEKO_VIEW_APP
-#define NEKO_VIEW_APP
+*/
 
 /**
- * @brief Creates a child for a running application.
+ * @brief A running application.
+ * @file neko_view_app.h
+ */
+
+#ifndef NEKO_VIEW_APP_H
+#define NEKO_VIEW_APP_H
+
+/**
+ * @brief Creates a slot content for a running application.
+ *
+ * @param cli A proxy backend client handle.
  *
  * Displays an application.
  */
 neko_view_slot *neko_view_app_init(gp_proxy_cli *cli);
 
 /**
- * @brief A poll handler for the app child.
+ * @brief A poll handler for the app slot.
+ *
+ * @param self A gfxprim poll fd. The priv pointer must point to the
+ * application slot returned from neko_view_app_init().
  */
 enum gp_poll_event_ret neko_view_app_event(gp_fd *self);
 
@@ -36,4 +45,4 @@ extern neko_view_slot **neko_apps;
  */
 gp_proxy_cli *neko_view_app_cli(neko_view_slot *self);
 
-#endif /* NEKO_VIEW_APP */
+#endif /* NEKO_VIEW_APP_H */
