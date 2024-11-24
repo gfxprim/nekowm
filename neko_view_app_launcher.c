@@ -13,6 +13,7 @@
 //TODO: Move!
 #include <widgets/gp_widget_gfx.h>
 
+#include "neko_menu.h"
 #include "neko_ctx.h"
 #include "neko_view_app_launcher.h"
 
@@ -84,46 +85,33 @@ void neko_app_launcher_exit(struct neko_view_slot *self)
 	free(self);
 }
 
+static void draw_entry(size_t idx, gp_pixmap *pixmap, gp_pixel fg, gp_pixel bg,
+                       gp_coord x, gp_coord y, gp_size w, gp_size h)
+{
+	gp_text_fit(pixmap, ctx.font, x, y, w,
+	            GP_ALIGN_LEFT|GP_VALIGN_BELOW,
+		    fg, bg, apps[idx].name);
+}
+
 void neko_app_launcher_show(neko_view *view)
 {
 	struct app_launcher *app_launcher = APP_LAUNCHER_PRIV(view->slot);
-	gp_pixmap *pix = neko_view_pixmap(view);
-	gp_size ascent = gp_text_ascent(ctx.font);
+	gp_pixmap *pixmap = neko_view_pixmap(view);
 
-	gp_fill(pix, ctx.col_bg);
+	struct neko_menu menu = {
+		.heading = "Application launcher",
+		.items_cnt = gp_vec_len(apps),
+		.items_offset = app_launcher->app_offset,
+		.item_sel = app_launcher->app_selected,
+		.focused = neko_view_is_focused(view),
+		.entry_h = gp_text_ascent(ctx.font),
+		.draw_entry = draw_entry,
+	};
 
-	unsigned int i = app_launcher->app_offset;
-	gp_coord y = ctx.padd;
-	gp_coord x = ctx.padd;
-	gp_size w = view->w - 2 * ctx.padd;
-
-	for (;;) {
-		if (i >= gp_vec_len(apps))
-			break;
-
-
-		if (y + ascent + ctx.padd > view->h)
-			break;
-
-		gp_pixel fg = ctx.col_fg;
-		gp_pixel bg = ctx.col_bg;
-
-		if (i == app_launcher->app_selected) {
-			GP_SWAP(bg, fg);
-			gp_fill_rect_xywh(pix, x, y, w, ascent+ctx.padd, bg);
-		}
-
-		y += ascent;
-
-		gp_text_fit(pix, ctx.font, x, y, w,
-				GP_ALIGN_LEFT|GP_VALIGN_BASELINE, fg,
-				bg, apps[i].name);
-
-		y += ctx.padd;
-		i++;
-	}
-
+	neko_menu_repaint(&menu, pixmap);
 	neko_view_flip(view);
+
+	app_launcher->app_offset = menu.items_offset;
 }
 
 static void run_selected_app(struct app_launcher *app_launcher)

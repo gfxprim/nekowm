@@ -20,6 +20,7 @@
 struct neko_ctx {
 	gp_pixel col_fg;
 	gp_pixel col_bg;
+	gp_pixel col_sel;
 
 	gp_size padd;
 

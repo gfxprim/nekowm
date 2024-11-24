@@ -24,8 +24,9 @@ void neko_ctx_init(gp_backend *backend, const char *font_family)
 		ctx.font = &style;
 
 	ctx.backend = backend;
-	ctx.padd = 10;
+	ctx.padd = gp_text_descent(ctx.font)+1;
 
 	ctx.col_bg = gp_rgb_to_pixmap_pixel(0, 0, 0, backend->pixmap);
 	ctx.col_fg = gp_rgb_to_pixmap_pixel(0xff, 0xff, 0xff, backend->pixmap);
+	ctx.col_sel = gp_rgb_to_pixmap_pixel(0, 0x20, 0x60, backend->pixmap);
 }

@@ -129,6 +129,23 @@ void neko_view_init(neko_view *self,
 
 void neko_subviews_init(neko_view *left, neko_view *right, neko_view *parent);
 
+/**
+ * @brief Returns view focused child.
+ *
+ * @param self A neko view.
+ *
+ * @return Focused child, or NULL if view does not have any children.
+ */
+neko_view *neko_view_focused_child(neko_view *self);
+
+/**
+ * @brief Returns true if view is focused.
+ *
+ * @param self A neko view.
+ *
+ * @return Returns true if view is focused.
+ */
+int neko_view_is_focused(neko_view *self);
 
 static inline int neko_view_is_shown(neko_view *self)
 {
