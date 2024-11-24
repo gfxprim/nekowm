@@ -161,9 +161,9 @@ static void err_rem_cli(neko_view_slot *slot, gp_fd *self)
 			neko_apps = gp_vec_del(neko_apps, i, 1);
 	}
 
-	close(self->fd);
-
 	gp_backend_poll_rem(ctx.backend, self);
+
+	close(self->fd);
 
 	//TODO! No cli list? keeps apps in vector?
 	gp_proxy_cli_rem(&apps_list, app->cli);
