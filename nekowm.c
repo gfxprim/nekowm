@@ -34,8 +34,6 @@ static size_t cur_view = 1;
 static neko_view left_view;
 static neko_view right_view;
 
-static neko_view_slot *app_launcher;
-
 static void do_exit(void)
 {
 	gp_backend_exit(backend);
@@ -160,17 +158,21 @@ static enum gp_poll_event_ret server_event(gp_fd *self)
 
 static void print_help(const char *name)
 {
-	printf("%s -b backend_options -f font_family\n", name);
+	printf("%s -b backend_options -f font_family -r\n", name);
+	printf("\t-b backend options, pass 'help' for help\n");
+	printf("\t-f font family, pass 'help' for help\n");
+	printf("\t-r reverse colors (default is white on black)\n");
 }
 
 int main(int argc, char *argv[])
 {
 	int opt;
+	int reverse = 0;
 	const char *font_family = "haxor-narrow-18";
 
 	signal(SIGPIPE, SIG_IGN);
 
-	while ((opt = getopt(argc, argv, "b:f:h")) != -1) {
+	while ((opt = getopt(argc, argv, "b:f:hr")) != -1) {
 	switch (opt) {
 		case 'b':
 			backend_opts = optarg;
@@ -180,9 +182,14 @@ int main(int argc, char *argv[])
 		break;
 		case 'h':
 			print_help(argv[0]);
+			exit(0);
+		break;
+		case 'r':
+			reverse = 1;
 		break;
 		default:
-			fprintf(stderr, "Invalid parameter '%c'", opt);
+			print_help(argv[0]);
+			exit(1);
 		}
 	}
 
@@ -192,10 +199,23 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	if (!strcmp(font_family, "help")) {
+		gp_fonts_iter i;
+		const gp_font_family *f;
+
+		printf("Available compiled in fonts:\n\n");
+
+		GP_FONT_FAMILY_FOREACH(&i, f)
+			printf("\t\t - %s\n", f->family_name);
+
+		printf("\n");
+		exit(0);
+	}
+
 	gp_size w = backend->pixmap->w;
 	gp_size h = backend->pixmap->h;
 
-	neko_ctx_init(backend, font_family);
+	neko_ctx_init(backend, reverse, font_family);
 
 	unsigned int i;
 

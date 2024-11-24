@@ -31,6 +31,6 @@ struct neko_ctx {
 
 extern struct neko_ctx ctx;
 
-void neko_ctx_init(gp_backend *backend, const char *font_family);
+void neko_ctx_init(gp_backend *backend, int reverse, const char *font_family);
 
 #endif /* NEKO_CTX_H */
