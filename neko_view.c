@@ -45,6 +45,36 @@ static void empty_view(neko_view *self)
 	neko_view_flip(self);
 }
 
+static void split_horiz(neko_view *self)
+{
+	if (self->subviews[0]) {
+		self->subviews[0]->x = self->x;
+		self->subviews[0]->y = self->y;
+		neko_view_resize(self->subviews[0], self->w, self->h/2);
+	}
+
+	if (self->subviews[1]) {
+		self->subviews[0]->x = self->x;
+		self->subviews[0]->y = self->y + self->h/2;
+		neko_view_resize(self->subviews[1], self->w, self->h/2);
+	}
+}
+
+static void split_vert(neko_view *self)
+{
+	if (self->subviews[0]) {
+		self->subviews[0]->x = self->x;
+		self->subviews[0]->y = self->y;
+		neko_view_resize(self->subviews[0], self->w/2, self->h);
+	}
+
+	if (self->subviews[1]) {
+		self->subviews[1]->x = self->x + self->w/2;
+		self->subviews[0]->y = self->y;
+		neko_view_resize(self->subviews[1], self->w/2, self->h);
+	}
+}
+
 void neko_view_resize(neko_view *self, gp_size w, gp_size h)
 {
 	self->w = w;
@@ -53,12 +83,13 @@ void neko_view_resize(neko_view *self, gp_size w, gp_size h)
 	if (self->slot && self->slot->ops->resize)
 		self->slot->ops->resize(self);
 
-	if (self->subviews[0])
-		neko_view_resize(self->subviews[0], w/2, h);
-
-	if (self->subviews[1]) {
-		self->subviews[1]->x = self->x + self->w/2;
-		neko_view_resize(self->subviews[1], w/2, h);
+	switch (self->split_mode) {
+	case NEKO_VIEW_SPLIT_HORIZ:
+		split_horiz(self);
+	break;
+	case NEKO_VIEW_SPLIT_VERT:
+		split_vert(self);
+	break;
 	}
 }
 
@@ -96,22 +127,14 @@ void neko_view_init(neko_view *self,
 
 void neko_subviews_init(neko_view *left, neko_view *right, neko_view *parent)
 {
-	left->x = parent->x;
-	left->y = parent->y;
-	left->w = parent->w/2;
-	left->h = parent->h;
 	left->parent = parent;
-
 	parent->subviews[0] = left;
 
-	right->x = parent->x + parent->w/2;
-	right->y = parent->y;
-	right->w = parent->w/2;
-	right->h = parent->h;
-
 	right->parent = parent;
-
 	parent->subviews[1] = right;
+
+	parent->split_mode = NEKO_VIEW_SPLIT_VERT;
+	split_vert(parent);
 
 	empty_view(left);
 	empty_view(right);

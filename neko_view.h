@@ -24,6 +24,16 @@ struct neko_view;
 struct neko_view_slot;
 
 /**
+ * @brief A split mode.
+ *
+ * If view is split it can be split either horizontally or vertically.
+ */
+enum neko_view_split_mode {
+	NEKO_VIEW_SPLIT_HORIZ,
+	NEKO_VIEW_SPLIT_VERT,
+};
+
+/**
  * @brief A view slot ops.
  *
  * Callback to render a slot content.
@@ -119,6 +129,8 @@ typedef struct neko_view {
 	struct neko_view *subviews[2];
 	/** @brief Currently focused subview. */
 	unsigned int focused_subview;
+	/** @brief Type of the split. */
+	enum neko_view_split_mode split_mode;
 
 	/** @brief What is shown in the view. */
 	neko_view_slot *slot;
