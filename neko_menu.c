@@ -35,10 +35,14 @@ void neko_menu_repaint(struct neko_menu *menu, gp_pixmap *pixmap)
 	gp_fill(pixmap, ctx.col_bg);
 
 	if (menu->heading) {
+		gp_text_style *font = menu->focused ? ctx.font_bold : ctx.font;
+
 		if (menu->focused)
 			gp_fill_rect_xywh(pixmap, 0, 0, w, 2*ctx.padd + ta, ctx.col_sel);
-		gp_print(pixmap, ctx.font, w/2, cur_y, GP_ALIGN_CENTER|GP_VALIGN_BOTTOM,
-		         ctx.col_fg, ctx.col_bg, "%s", menu->heading);
+
+		gp_print(pixmap, font, w/2, cur_y, GP_ALIGN_CENTER|GP_VALIGN_BOTTOM,
+		         ctx.col_fg, ctx.col_bg, "\u00ab %s \u00bb", menu->heading);
+
 		cur_y += 2 * ctx.padd + ta;
 		gp_hline_xyw(pixmap, 0, cur_y-ctx.padd, w, ctx.col_fg);
 	}

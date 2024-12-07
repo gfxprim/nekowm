@@ -17,15 +17,38 @@
 #include <core/gp_types.h>
 #include <backends/gp_types.h>
 
+/**
+ * @brief A global context.
+ */
 struct neko_ctx {
+	/**
+	 * @brief A foreground color.
+	 */
 	gp_pixel col_fg;
+	/**
+	 * @brief A background color.
+	 */
 	gp_pixel col_bg;
+	/**
+	 * @brief A selected color.
+	 */
 	gp_pixel col_sel;
 
 	gp_size padd;
 
+	/**
+	 * @brief Current font.
+	 */
 	gp_text_style *font;
 
+	/**
+	 * @brief Current bold font.
+	 */
+	gp_text_style *font_bold;
+
+	/**
+	 * @brief Pointer to the current backend.
+	 */
 	gp_backend *backend;
 };
 

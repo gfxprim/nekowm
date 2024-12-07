@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: GPL-2.0-or-later
 /*
 
-   Copyright (c) 2019-2023 Cyril Hrubis <metan@ucw.cz>
+   Copyright (c) 2019-2024 Cyril Hrubis <metan@ucw.cz>
 
  */
 
@@ -11,6 +11,7 @@
 
 struct neko_ctx ctx;
 static gp_text_style style = GP_DEFAULT_TEXT_STYLE;
+static gp_text_style style_bold = GP_DEFAULT_TEXT_STYLE;
 
 void neko_ctx_init(gp_backend *backend, int reverse, const char *font_family)
 {
@@ -22,6 +23,17 @@ void neko_ctx_init(gp_backend *backend, int reverse, const char *font_family)
 
 	if (style.font)
 		ctx.font = &style;
+
+	style_bold.font = gp_font_family_face_lookup(family, GP_FONT_REGULAR | GP_FONT_BOLD);
+	if (!style_bold.font)
+		style_bold.font = gp_font_family_face_lookup(family, GP_FONT_MONO | GP_FONT_BOLD);
+
+	if (!style_bold.font) {
+		style_bold.font = gp_font_family_face_lookup(family, GP_FONT_MONO);
+		gp_text_style_embold(&style_bold, style.font, 1);
+	}
+
+	ctx.font_bold = &style_bold;
 
 	ctx.backend = backend;
 	ctx.padd = gp_text_descent(ctx.font)+1;

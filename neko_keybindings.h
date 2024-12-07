@@ -37,4 +37,7 @@
 /** @brief Moves virtual screens right. */
 #define NEKO_KEYS_VIRT_SCREENS_RIGHT GP_KEY_RIGHT_BRACE
 
+/** @brief Displays a help. */
+#define NEKO_KEYS_HELP GP_KEY_H
+
 #endif /* NEKO_KEYBINDINGS_H */
