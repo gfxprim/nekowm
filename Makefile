@@ -4,7 +4,7 @@ BIN=nekowm
 BIN_LOGIN=nekowm-login
 #TODO: Move text_fit to core to avoid linking against widgets
 $(BIN): LDLIBS=-lcrypt -lgfxprim $(shell gfxprim-config --libs-backends) -lgfxprim-widgets
-$(BIN_LOGIN): LDLIBS=-lcrypt -lgfxprim $(shell gfxprim-config --libs-backends) -lgfxprim-widgets
+$(BIN_LOGIN): LDLIBS=-lcrypt $(shell gfxprim-config --libs-widgets) -lgfxprim
 SOURCES=$(wildcard *.c)
 DEP=$(SOURCES:.c=.dep)
 OBJ=$(SOURCES:.c=.o)
