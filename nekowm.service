@@ -1,0 +1,9 @@
+[Unit]
+Description="NekoWM startup service"
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nekowm
+
+[Install]
+WantedBy=multi-user.target

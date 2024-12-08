@@ -36,6 +36,7 @@ DESTDIR="$RPM_BUILD_ROOT" make install
 %{_datadir}/applications/nekowm.desktop
 %{_datadir}/nekowm/
 %{_datadir}/nekowm/nekowm.png
+%{_unitdir}/nekowm.service
 
 %changelog
 * Fri Nov 22 2024 Cyril Hrubis <metan@ucw.cz>
