@@ -39,6 +39,8 @@ int neko_switch_user(const char *username)
 	if (!pwd)
 		return 1;
 
+	char *path = strdup(getenv("PATH"));
+
 	if (setgid(pwd->pw_gid))
 		return 1;
 
@@ -52,6 +54,9 @@ int neko_switch_user(const char *username)
 	setenv("USER", pwd->pw_name, 1);
 	setenv("LOGNAME", pwd->pw_name, 1);
 	setenv("SHELL", pwd->pw_shell[0] ? pwd->pw_shell : "/bin/sh", 1);
+
+	setenv("PATH", path, 1);
+	free(path);
 
 	if (chdir(pwd->pw_dir)) {
 	}
