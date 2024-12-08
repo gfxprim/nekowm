@@ -2,4 +2,4 @@ usr/bin/nekowm
 usr/bin/nekowm-login
 usr/share/applications/nekowm.desktop
 usr/share/nekowm/nekowm.png
-etc/systemd/system/nekowm.service
+lib/systemd/system/nekowm.service
