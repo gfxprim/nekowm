@@ -32,6 +32,7 @@ DESTDIR="$RPM_BUILD_ROOT" make install
 %files -n nekowm
 %defattr(-,root,root)
 %{_bindir}/nekowm
+%{_bindir}/nekowm-login
 %{_datadir}/applications/
 %{_datadir}/applications/nekowm.desktop
 %{_datadir}/nekowm/

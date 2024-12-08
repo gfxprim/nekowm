@@ -3,7 +3,7 @@ Description="NekoWM startup service"
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/nekowm
+ExecStart=/usr/bin/nekowm-login
 
 [Install]
 WantedBy=multi-user.target
