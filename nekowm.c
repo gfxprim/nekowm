@@ -45,7 +45,7 @@ static void backend_event(gp_backend *b)
 	unsigned int i;
 	gp_event *ev;
 
-	while ((ev = gp_backend_poll_event(b))) {
+	while ((ev = gp_backend_ev_get(b))) {
 		switch (ev->type) {
 		case GP_EV_KEY:
 			if (!gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
