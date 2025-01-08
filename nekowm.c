@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: GPL-2.0-or-later
 /*
 
-   Copyright (c) 2019-2024 Cyril Hrubis <metan@ucw.cz>
+   Copyright (c) 2019-2025 Cyril Hrubis <metan@ucw.cz>
 
  */
 
@@ -57,14 +57,6 @@ static void backend_event(gp_backend *b)
 			switch (ev->val) {
 			case NEKO_KEYS_EXIT:
 				do_exit();
-			break;
-			case NEKO_KEYS_LIST_APPS:
-			//	neko_view_show_child(&main_views[cur_view], running_apps);
-				return;
-			break;
-			case NEKO_KEYS_APP_LAUNCHER:
-			//	neko_view_show_child(&main_views[cur_view], app_launcher);
-				return;
 			break;
 			case NEKO_KEYS_VIRT_SCREENS_LEFT:
 				if (cur_view != 0) {
@@ -161,18 +153,27 @@ static void print_help(const char *name)
 	printf("%s -b backend_options -f font_family -r\n", name);
 	printf("\t-b backend options, pass 'help' for help\n");
 	printf("\t-f font family, pass 'help' for help\n");
-	printf("\t-r reverse colors (default is white on black)\n");
+	printf("\t-r rotate display 90, 180, 270 degrees\n");
+	printf("\t-s swap fg and bg colors (default is white on black)\n");
 }
+
+enum display_rotation {
+	DISPLAY_ROTATE_0,
+	DISPLAY_ROTATE_90,
+	DISPLAY_ROTATE_180,
+	DISPLAY_ROTATE_270,
+};
 
 int main(int argc, char *argv[])
 {
 	int opt;
-	int reverse = 0;
+	int swap = 0;
 	const char *font_family = "haxor-narrow-18";
+	enum display_rotation display_rotation = DISPLAY_ROTATE_0;
 
 	signal(SIGPIPE, SIG_IGN);
 
-	while ((opt = getopt(argc, argv, "b:f:hr")) != -1) {
+	while ((opt = getopt(argc, argv, "b:f:hr:s")) != -1) {
 	switch (opt) {
 		case 'b':
 			backend_opts = optarg;
@@ -185,18 +186,24 @@ int main(int argc, char *argv[])
 			exit(0);
 		break;
 		case 'r':
-			reverse = 1;
+			if (!strcmp(optarg, "90")) {
+				display_rotation = DISPLAY_ROTATE_90;
+			} else if (!strcmp(optarg, "180")) {
+				display_rotation = DISPLAY_ROTATE_180;
+			} else if (!strcmp(optarg, "270")) {
+				display_rotation = DISPLAY_ROTATE_270;
+			} else {
+				print_help(argv[0]);
+				exit(1);
+			}
+		break;
+		case 's':
+			swap = 1;
 		break;
 		default:
 			print_help(argv[0]);
 			exit(1);
 		}
-	}
-
-	backend = gp_backend_init(backend_opts, 0, 0, "NekoWM");
-	if (!backend) {
-		fprintf(stderr, "Failed to initialize backend\n");
-		return 1;
 	}
 
 	if (!strcmp(font_family, "help")) {
@@ -212,10 +219,30 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	gp_size w = backend->pixmap->w;
-	gp_size h = backend->pixmap->h;
+	backend = gp_backend_init(backend_opts, 0, 0, "NekoWM");
+	if (!backend) {
+		fprintf(stderr, "Failed to initialize backend\n");
+		return 1;
+	}
 
-	neko_ctx_init(backend, reverse, font_family);
+	switch (display_rotation) {
+	case DISPLAY_ROTATE_270:
+		gp_pixmap_rotate_cw(backend->pixmap);
+	/* fallthrough */
+	case DISPLAY_ROTATE_180:
+		gp_pixmap_rotate_cw(backend->pixmap);
+	/* fallthrough */
+	case DISPLAY_ROTATE_90:
+		gp_pixmap_rotate_cw(backend->pixmap);
+	break;
+	case DISPLAY_ROTATE_0:
+	break;
+	}
+
+	gp_size w = gp_pixmap_w(backend->pixmap);
+	gp_size h = gp_pixmap_h(backend->pixmap);
+
+	neko_ctx_init(backend, swap, font_family);
 
 	unsigned int i;
 

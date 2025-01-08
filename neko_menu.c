@@ -24,8 +24,8 @@ static size_t min_offset(size_t item_sel, gp_size avail_h, gp_size entry_h)
 void neko_menu_repaint(struct neko_menu *menu, gp_pixmap *pixmap)
 {
 	gp_coord cur_y = ctx.padd;
-	gp_size w = pixmap->w;
-	gp_size h = pixmap->h;
+	gp_size w = gp_pixmap_w(pixmap);
+	gp_size h = gp_pixmap_h(pixmap);
 	gp_size p = ctx.padd;
 	gp_size p2 = 2 * ctx.padd;
 	gp_size ta = gp_text_ascent(ctx.font);
