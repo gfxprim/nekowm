@@ -3,7 +3,7 @@ CFLAGS+=-std=gnu99 $(shell gfxprim-config --cflags)
 BIN=nekowm
 BIN_LOGIN=nekowm-login
 #TODO: Move text_fit to core to avoid linking against widgets
-$(BIN): LDLIBS=-lcrypt -lgfxprim $(shell gfxprim-config --libs-backends) -lgfxprim-widgets
+$(BIN): LDLIBS=-lgfxprim $(shell gfxprim-config --libs-backends) -lgfxprim-widgets
 $(BIN_LOGIN): LDLIBS=-lcrypt $(shell gfxprim-config --libs-widgets) -lgfxprim
 SOURCES=$(wildcard *.c)
 DEP=$(SOURCES:.c=.dep)
@@ -14,7 +14,7 @@ all: $(BIN) $(BIN_LOGIN) $(DEP)
 %.dep: %.c
 	$(CC) $(CFLAGS) -M $< -o $@
 
-$(BIN): $(filter-out nekowm-login.o,$(OBJ))
+$(BIN): $(filter-out login.o nekowm-login.o,$(OBJ))
 $(BIN_LOGIN): login.o
 
 -include $(DEP)
