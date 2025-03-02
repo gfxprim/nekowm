@@ -45,4 +45,16 @@ extern neko_view_slot **neko_apps;
  */
 gp_proxy_cli *neko_view_app_cli(neko_view_slot *self);
 
+/**
+ * @brief Requests an client exit.
+ *
+ * @param cli A client to request exit.
+ */
+void neko_view_app_exit(gp_proxy_cli *cli);
+
+static inline size_t neko_view_app_cnt(void)
+{
+	return gp_vec_len(neko_apps);
+}
+
 #endif /* NEKO_VIEW_APP_H */

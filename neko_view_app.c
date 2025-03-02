@@ -14,6 +14,7 @@
 #include "neko_view.h"
 #include "neko_ctx.h"
 #include "neko_view_running_apps.h"
+#include "neko_view_exit.h"
 #include "neko_view_app.h"
 
 extern gp_dlist apps_list;
@@ -29,6 +30,28 @@ neko_view_slot **neko_apps;
 #define APP_PRIV(self) (struct app*)((self)->priv)
 
 static const neko_view_slot_ops app_ops;
+
+/**
+ * @brief Called when new application has connected.
+ *
+ * This multiplexes the event to different views.
+ */
+static void neko_cli_connected(gp_proxy_cli *cli)
+{
+	neko_running_apps_changed();
+	neko_view_exit_app_connected(cli);
+}
+
+/**
+ * @brief Called when applicatio has connected.
+ *
+ * This multiplexes the event to different views.
+ */
+static void neko_cli_disconnected(void)
+{
+	neko_running_apps_changed();
+	neko_view_exit_app_disconnected();
+}
 
 neko_view_slot *neko_view_app_init(gp_proxy_cli *cli)
 {
@@ -118,6 +141,12 @@ static void app_show(neko_view *self)
 	gp_proxy_cli_show(app->cli, app->shm, &cur_pos);
 }
 
+void neko_view_app_exit(gp_proxy_cli *cli)
+{
+	GP_DEBUG(4, "Closing cli (%p) '%s'", cli, cli->name);
+	gp_proxy_cli_send(cli, GP_PROXY_EXIT, NULL);
+}
+
 static void app_event(neko_view *self, gp_event *ev)
 {
 	struct app *app = APP_PRIV(self->slot);
@@ -132,8 +161,7 @@ static void app_event(neko_view *self, gp_event *ev)
 
 		switch (ev->val) {
 		case NEKO_KEYS_QUIT:
-			GP_DEBUG(4, "Closing cli (%p) '%s'", app->cli, app->cli->name);
-			gp_proxy_cli_send(app->cli, GP_PROXY_EXIT, NULL);
+			neko_view_app_exit(app->cli);
 			return;
 		break;
 		}
@@ -172,7 +200,7 @@ static void err_rem_cli(neko_view_slot *slot, gp_fd *self)
 
 	free(slot);
 
-	neko_running_apps_changed();
+	neko_cli_disconnected();
 }
 
 /*
@@ -249,10 +277,8 @@ enum gp_poll_event_ret neko_view_app_event(gp_fd *self)
 				   msg->rect.rect.w, msg->rect.rect.h);
 		break;
 		case GP_PROXY_NAME:
-			neko_running_apps_changed();
+			neko_cli_connected(app->cli);
 		break;
 		}
-
 	}
 }
-

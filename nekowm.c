@@ -20,6 +20,7 @@
 #include "neko_view_app_launcher.h"
 #include "neko_view_running_apps.h"
 #include "neko_view_app.h"
+#include "neko_view_exit.h"
 
 static gp_backend *backend;
 static const char *backend_opts = NULL;
@@ -34,10 +35,10 @@ static size_t cur_view = 1;
 static neko_view left_view;
 static neko_view right_view;
 
-static void do_exit(void)
+static void do_exit(enum neko_view_exit_type exit_type)
 {
-	gp_backend_exit(backend);
-	exit(0);
+	neko_view_slot *exit_view = neko_view_exit_init(exit_type);
+	neko_view_slot_put(&main_views[cur_view], exit_view);
 }
 
 static void backend_event(gp_backend *b)
@@ -48,16 +49,23 @@ static void backend_event(gp_backend *b)
 	while ((ev = gp_backend_ev_get(b))) {
 		switch (ev->type) {
 		case GP_EV_KEY:
-			if (!gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
-				break;
-
 			if (ev->code != GP_EV_KEY_DOWN)
 				break;
 
 			switch (ev->val) {
-			case NEKO_KEYS_EXIT:
-				do_exit();
+			case GP_KEY_POWER:
+				do_exit(NEKO_VIEW_EXIT_POWEROFF);
 			break;
+			}
+
+			if (!gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
+				break;
+
+			switch (ev->val) {
+			case NEKO_KEYS_EXIT:
+				do_exit(NEKO_VIEW_EXIT_QUIT);
+			break;
+			//TODO: Move to VIEWS
 			case NEKO_KEYS_VIRT_SCREENS_LEFT:
 				if (cur_view != 0) {
 					neko_view_hide(&main_views[cur_view]);
@@ -65,6 +73,7 @@ static void backend_event(gp_backend *b)
 					neko_view_show(&main_views[cur_view]);
 				}
 			break;
+			//TODO: Move to VIEWS
 			case NEKO_KEYS_VIRT_SCREENS_RIGHT:
 				if (cur_view < NEKO_MAIN_VIEWS-1) {
 					neko_view_hide(&main_views[cur_view]);
@@ -80,7 +89,7 @@ static void backend_event(gp_backend *b)
 		case GP_EV_SYS:
 			switch (ev->code) {
 			case GP_EV_SYS_QUIT:
-				do_exit();
+				do_exit(NEKO_VIEW_EXIT_QUIT);
 			break;
 			case GP_EV_SYS_RESIZE:
 				gp_backend_resize_ack(b);

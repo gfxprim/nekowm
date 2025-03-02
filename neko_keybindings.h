@@ -22,6 +22,9 @@
 /** @brief Exits the WM. */
 #define NEKO_KEYS_EXIT GP_KEY_X
 
+/** @brief Key to force neko exit or poweroff */
+#define NEKO_KEYS_FORCE GP_KEY_F
+
 /** @brief Go to the list of running applications. */
 #define NEKO_KEYS_LIST_APPS GP_KEY_R
 
