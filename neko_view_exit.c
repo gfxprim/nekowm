@@ -21,6 +21,15 @@
 static enum neko_view_exit_type exit_type;
 static int timeout = 30;
 
+static uint32_t exit_timeout_callback(gp_timer *self);
+
+static gp_timer exit_timer = {
+	.expires = 1000,
+	.period = 1000,
+	.id = "Exit timer",
+	.callback = exit_timeout_callback,
+};
+
 static void do_exit(void)
 {
 	GP_DEBUG(1, "Applications finished, exitting...");
@@ -33,11 +42,23 @@ static void do_poweroff(void)
 	gp_backend_exit(ctx.backend);
 	GP_DEBUG(1, "Applications finished, calling poweroff...");
 
-	char *argv[] = {"sudo", "poweroff", NULL};
-	execve("sudo", argv, NULL);
+	execlp("sudo", "sudo", "poweroff", NULL);
 
 	/* Shoudln't be reached. */
 	exit(0);
+}
+
+static void print_poweroff(neko_view *self, gp_size w, gp_size h, gp_size ta)
+{
+	gp_pixmap *pixmap = neko_view_pixmap(self);
+	gp_fill(pixmap, ctx.col_bg);
+	gp_print(pixmap, ctx.font_bold, w/2, h/2, GP_ALIGN_CENTER|GP_VALIGN_CENTER,
+		         ctx.col_fg, ctx.col_bg,
+	                 "\u00ab Machine is powered off \u00bb");
+	neko_view_flip(self);
+	gp_backend_ev_poll(ctx.backend);
+	//TODO: Fix e-ink to do a final refresh
+	sleep(1);
 }
 
 static void exit_show(neko_view *self)
@@ -68,8 +89,11 @@ static void exit_show(neko_view *self)
 	neko_view_flip(self);
 
 	if (!neko_view_app_cnt() || timeout <= 0) {
+		gp_backend_timer_rem(ctx.backend, &exit_timer);
+		sleep(1);
 		switch (exit_type) {
 		case NEKO_VIEW_EXIT_POWEROFF:
+			print_poweroff(self, w, h, ta);
 			do_poweroff();
 		break;
 		default:
@@ -131,13 +155,6 @@ static uint32_t exit_timeout_callback(gp_timer *self)
 	exit_show(exit_slot.view);
 	return self->period;
 }
-
-static gp_timer exit_timer = {
-	.expires = 1000,
-	.period = 1000,
-	.id = "Exit timer",
-	.callback = exit_timeout_callback,
-};
 
 neko_view_slot *neko_view_exit_init(enum neko_view_exit_type type)
 {
