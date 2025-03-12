@@ -23,7 +23,6 @@
 #include "neko_view_exit.h"
 
 static gp_backend *backend;
-static const char *backend_opts = NULL;
 
 /** @brief A list of application connected to the proxy backend. */
 gp_dlist apps_list;
@@ -41,9 +40,18 @@ static void do_exit(enum neko_view_exit_type exit_type)
 	neko_view_slot_put(&main_views[cur_view], exit_view);
 }
 
-static void backend_event(gp_backend *b)
+static void resize_views(gp_size w, gp_size h)
 {
 	unsigned int i;
+
+	for (i = 0; i < NEKO_MAIN_VIEWS; i++)
+		neko_view_resize(&main_views[i], w, h);
+
+	neko_view_repaint(&main_views[cur_view]);
+}
+
+static void backend_event(gp_backend *b)
+{
 	gp_event *ev;
 
 	while ((ev = gp_backend_ev_get(b))) {
@@ -81,6 +89,12 @@ static void backend_event(gp_backend *b)
 					neko_view_show(&main_views[cur_view]);
 				}
 			break;
+			case NEKO_KEYS_ROTATE:
+				//TODO: Add gp_backend_rotate_*() functions and
+				//generate resize events in backend on rotate!
+				gp_pixmap_rotate_cw(backend->pixmap);
+				resize_views(gp_pixmap_w(backend->pixmap), gp_pixmap_h(backend->pixmap));
+			break;
 			default:
 			break;
 			}
@@ -93,12 +107,7 @@ static void backend_event(gp_backend *b)
 			break;
 			case GP_EV_SYS_RESIZE:
 				gp_backend_resize_ack(b);
-
-				for (i = 0; i < NEKO_MAIN_VIEWS; i++)
-					neko_view_resize(&main_views[i], ev->sys.w, ev->sys.h);
-
-				neko_view_repaint(&main_views[cur_view]);
-
+				resize_views(ev->sys.w, ev->sys.h);
 				return;
 			}
 		break;
@@ -157,6 +166,22 @@ static enum gp_poll_event_ret server_event(gp_fd *self)
 	return 0;
 }
 
+struct neko_config {
+	char backend_opts[256];
+	char font_family[256];
+	char rotate[4];
+	bool color_swap;
+};
+
+static struct gp_json_struct neko_cfg_desc[] = {
+	GP_JSON_SERDES_STR_CPY(struct neko_config, backend_opts, GP_JSON_SERDES_OPTIONAL, 256),
+	GP_JSON_SERDES_BOOL(struct neko_config, color_swap, GP_JSON_SERDES_OPTIONAL),
+	GP_JSON_SERDES_STR_CPY(struct neko_config, font_family, GP_JSON_SERDES_OPTIONAL, 256),
+	//TODO: Add enum serdes?
+	GP_JSON_SERDES_STR_CPY(struct neko_config, rotate, GP_JSON_SERDES_OPTIONAL, 4),
+	{}
+};
+
 static void print_help(const char *name)
 {
 	printf("%s -b backend_options -f font_family -r\n", name);
@@ -171,43 +196,63 @@ enum display_rotation {
 	DISPLAY_ROTATE_90,
 	DISPLAY_ROTATE_180,
 	DISPLAY_ROTATE_270,
+	DISPLAY_ROTATE_INVALID = -1,
 };
+
+static void load_cfg(struct neko_config *cfg)
+{
+	gp_json_load_struct("/etc/nekowm.conf", neko_cfg_desc, cfg);
+}
+
+static enum display_rotation str_to_rot(char *rotate)
+{
+	if (!strcmp(rotate, "90"))
+		return DISPLAY_ROTATE_90;
+	else if (!strcmp(rotate, "180"))
+		return DISPLAY_ROTATE_180;
+	else if (!strcmp(rotate, "270"))
+		return DISPLAY_ROTATE_270;
+	else
+		return DISPLAY_ROTATE_INVALID;
+}
 
 int main(int argc, char *argv[])
 {
 	int opt;
-	int swap = 0;
-	const char *font_family = "haxor-narrow-18";
+	struct neko_config cfg = {
+		.font_family = "haxor-narrow-18",
+	};
+
 	enum display_rotation display_rotation = DISPLAY_ROTATE_0;
+
+	load_cfg(&cfg);
+
+	display_rotation = str_to_rot(cfg.rotate);
 
 	signal(SIGPIPE, SIG_IGN);
 
 	while ((opt = getopt(argc, argv, "b:f:hr:s")) != -1) {
 	switch (opt) {
 		case 'b':
-			backend_opts = optarg;
+			strncpy(cfg.backend_opts, optarg, sizeof(cfg.backend_opts)-1);
 		break;
 		case 'f':
-			font_family = optarg;
+			strncpy(cfg.font_family, optarg, sizeof(cfg.font_family)-1);
 		break;
 		case 'h':
 			print_help(argv[0]);
 			exit(0);
 		break;
 		case 'r':
-			if (!strcmp(optarg, "90")) {
-				display_rotation = DISPLAY_ROTATE_90;
-			} else if (!strcmp(optarg, "180")) {
-				display_rotation = DISPLAY_ROTATE_180;
-			} else if (!strcmp(optarg, "270")) {
-				display_rotation = DISPLAY_ROTATE_270;
-			} else {
+			display_rotation = str_to_rot(optarg);
+
+			if (display_rotation == DISPLAY_ROTATE_INVALID) {
 				print_help(argv[0]);
 				exit(1);
 			}
 		break;
 		case 's':
-			swap = 1;
+			cfg.color_swap = true;
 		break;
 		default:
 			print_help(argv[0]);
@@ -215,7 +260,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (!strcmp(font_family, "help")) {
+	if (!strcmp(cfg.font_family, "help")) {
 		gp_fonts_iter i;
 		const gp_font_family *f;
 
@@ -228,7 +273,7 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	backend = gp_backend_init(backend_opts, 0, 0, "NekoWM");
+	backend = gp_backend_init(cfg.backend_opts, 0, 0, "NekoWM");
 	if (!backend) {
 		fprintf(stderr, "Failed to initialize backend\n");
 		return 1;
@@ -244,6 +289,7 @@ int main(int argc, char *argv[])
 	case DISPLAY_ROTATE_90:
 		gp_pixmap_rotate_cw(backend->pixmap);
 	break;
+	case DISPLAY_ROTATE_INVALID:
 	case DISPLAY_ROTATE_0:
 	break;
 	}
@@ -251,7 +297,7 @@ int main(int argc, char *argv[])
 	gp_size w = gp_pixmap_w(backend->pixmap);
 	gp_size h = gp_pixmap_h(backend->pixmap);
 
-	neko_ctx_init(backend, swap, font_family);
+	neko_ctx_init(backend, cfg.color_swap, cfg.font_family);
 
 	unsigned int i;
 
