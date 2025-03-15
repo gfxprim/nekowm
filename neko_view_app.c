@@ -245,6 +245,8 @@ static void shm_update(neko_view_slot *slot, gp_coord x, gp_coord y, gp_size w, 
 	gp_blit_xywh_clipped(&app->shm->pixmap, x, y, w, h, neko_view_pixmap(view), x, y);
 
 	neko_view_update_rect(view, x, y, w, h);
+
+	gp_proxy_cli_rect_updated(app->cli, x, y, w, h);
 }
 
 enum gp_poll_event_ret neko_view_app_event(gp_fd *self)
