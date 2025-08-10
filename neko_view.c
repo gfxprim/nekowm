@@ -15,14 +15,15 @@
 
 void neko_view_update_rect(neko_view *self, gp_coord x, gp_coord y, gp_size w, gp_size h)
 {
-	if (self->x + x + w > self->w) {
-		GP_WARN("w = %u > self->w %u", w, self->w);
-		w = self->w - self->x - x;
+	if (x + w > self->w) {
+		GP_WARN("x = %u + w = %u > self->w %u", x, w, self->w);
+		w = self->w - x;
 	}
 
-	if (self->y + y + h > self->h) {
-		GP_WARN("h = %u > self->h %u", h, self->h);
-		h = self->h - self->y - y;
+	if (y + h > self->h) {
+		GP_WARN("y = %u + h = %u > self->h %u",
+                        y, h, self->h);
+		h = self->y - y;
 	}
 
 	gp_backend_update_rect_xywh(ctx.backend, self->x + x, self->y + y, w, h);
@@ -54,8 +55,8 @@ static void split_horiz(neko_view *self)
 	}
 
 	if (self->subviews[1]) {
-		self->subviews[0]->x = self->x;
-		self->subviews[0]->y = self->y + self->h/2;
+		self->subviews[1]->x = self->x;
+		self->subviews[1]->y = self->y + self->h/2;
 		neko_view_resize(self->subviews[1], self->w, self->h/2);
 	}
 }
@@ -70,7 +71,7 @@ static void split_vert(neko_view *self)
 
 	if (self->subviews[1]) {
 		self->subviews[1]->x = self->x + self->w/2;
-		self->subviews[0]->y = self->y;
+		self->subviews[1]->y = self->y;
 		neko_view_resize(self->subviews[1], self->w/2, self->h);
 	}
 }
@@ -79,6 +80,8 @@ void neko_view_resize(neko_view *self, gp_size w, gp_size h)
 {
 	self->w = w;
 	self->h = h;
+
+	GP_DEBUG(4, "Resizing view %p to %ux%u", self, w, h);
 
 	if (self->slot && self->slot->ops->resize)
 		self->slot->ops->resize(self);
@@ -115,6 +118,8 @@ void neko_view_repaint(neko_view *self)
 void neko_view_init(neko_view *self,
                     gp_size x, gp_size y, gp_size w, gp_size h)
 {
+	GP_DEBUG(4, "Initializing view %p %ux%u-%ux%u", self, x, y, w, h);
+
 	self->x = x;
 	self->y = y;
 	self->w = w;
@@ -125,16 +130,26 @@ void neko_view_init(neko_view *self,
 	empty_view(self);
 }
 
-void neko_subviews_init(neko_view *left, neko_view *right, neko_view *parent)
+void neko_subviews_init(neko_view *left, neko_view *right, neko_view *parent, enum neko_view_split_mode mode)
 {
+	GP_DEBUG(4, "Setting up split view parent %p left %p right %p", parent, left, right);
+
 	left->parent = parent;
 	parent->subviews[0] = left;
 
 	right->parent = parent;
 	parent->subviews[1] = right;
 
-	parent->split_mode = NEKO_VIEW_SPLIT_VERT;
-	split_vert(parent);
+	parent->split_mode = mode;
+
+	switch (mode) {
+	case NEKO_VIEW_SPLIT_HORIZ:
+		split_horiz(parent);
+	break;
+	case NEKO_VIEW_SPLIT_VERT:
+		split_vert(parent);
+	break;
+	}
 
 	empty_view(left);
 	empty_view(right);

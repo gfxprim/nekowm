@@ -139,7 +139,7 @@ typedef struct neko_view {
 void neko_view_init(neko_view *self,
                     gp_size x, gp_size y, gp_size w, gp_size h);
 
-void neko_subviews_init(neko_view *left, neko_view *right, neko_view *parent);
+void neko_subviews_init(neko_view *left, neko_view *right, neko_view *parent, enum neko_view_split_mode mode);
 
 /**
  * @brief Returns view focused child.

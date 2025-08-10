@@ -27,12 +27,15 @@ static gp_backend *backend;
 /** @brief A list of application connected to the proxy backend. */
 gp_dlist apps_list;
 
-#define NEKO_MAIN_VIEWS 4
+#define NEKO_MAIN_VIEWS 5
 static neko_view main_views[NEKO_MAIN_VIEWS];
 static size_t cur_view = 1;
 
 static neko_view left_view;
 static neko_view right_view;
+
+static neko_view top_view;
+static neko_view bottom_view;
 
 static void do_exit(enum neko_view_exit_type exit_type)
 {
@@ -308,18 +311,22 @@ int main(int argc, char *argv[])
 
 	main_views[0].slot = neko_app_launcher_init();
 
-	neko_subviews_init(&left_view, &right_view, &main_views[3]);
+	neko_subviews_init(&left_view, &right_view, &main_views[3], NEKO_VIEW_SPLIT_VERT);
 
 	neko_view_slot_put(&left_view, neko_running_apps_init());
 	left_view.slot_exit = slot_exit_running_apps;
 	neko_view_slot_put(&right_view, neko_running_apps_init());
 	right_view.slot_exit = slot_exit_running_apps;
 
-	neko_view_slot_put(&main_views[1], neko_running_apps_init());
-	main_views[1].slot_exit = slot_exit_running_apps;
+	neko_subviews_init(&top_view, &bottom_view, &main_views[4], NEKO_VIEW_SPLIT_HORIZ);
 
+	neko_view_slot_put(&top_view, neko_running_apps_init());
+	top_view.slot_exit = slot_exit_running_apps;
+	neko_view_slot_put(&bottom_view, neko_running_apps_init());
+	bottom_view.slot_exit = slot_exit_running_apps;
+
+	neko_view_slot_put(&main_views[1], neko_running_apps_init());
 	neko_view_slot_put(&main_views[2], neko_running_apps_init());
-	main_views[2].slot_exit = slot_exit_running_apps;
 
 	neko_view_show(&main_views[cur_view]);
 
