@@ -225,7 +225,7 @@ static void on_unmap(neko_view_slot *slot, gp_proxy_cli *cli)
 	gp_proxy_cli_send(cli, GP_PROXY_SHOW, NULL);
 }
 
-static void shm_update(neko_view_slot *slot, gp_coord x, gp_coord y, gp_size w, gp_size h)
+static void shm_update(neko_view_slot *slot, struct gp_proxy_rect *rect)
 {
 	if (!neko_view_is_shown(slot->view))
 		return;
@@ -234,19 +234,19 @@ static void shm_update(neko_view_slot *slot, gp_coord x, gp_coord y, gp_size w, 
 	gp_size screen_h = view->h;
 	struct app *app = APP_PRIV(slot);
 
-	if (h > screen_h) {
+	if (rect->h > screen_h) {
 		GP_WARN("Invalid height");
-		h = screen_h;
+		rect->h = screen_h;
 	}
 
-	//printf("%i %i %u %u\n", x, y, w, h);
-
 	//TODO: Check SIZE!!!
-	gp_blit_xywh_clipped(&app->shm->pixmap, x, y, w, h, neko_view_pixmap(view), x, y);
+	gp_blit_xywh_clipped(&app->shm->pixmap,
+	                     rect->x, rect->y, rect->w, rect->h,
+	                     neko_view_pixmap(view), rect->x, rect->y);
 
-	neko_view_update_rect(view, x, y, w, h);
+	neko_view_update_rect(view, rect->x, rect->y, rect->w, rect->h);
 
-	gp_proxy_cli_rect_updated(app->cli, x, y, w, h);
+	gp_proxy_cli_rect_updated(app->cli, rect);
 }
 
 enum gp_poll_event_ret neko_view_app_event(gp_fd *self)
@@ -274,9 +274,7 @@ enum gp_poll_event_ret neko_view_app_event(gp_fd *self)
 			on_unmap(slot, app->cli);
 		break;
 		case GP_PROXY_UPDATE:
-			shm_update(slot,
-				   msg->rect.rect.x, msg->rect.rect.y,
-				   msg->rect.rect.w, msg->rect.rect.h);
+			shm_update(slot, &msg->rect.rect);
 		break;
 		case GP_PROXY_NAME:
 			neko_cli_connected(app->cli);
