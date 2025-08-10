@@ -53,6 +53,19 @@ static void resize_views(gp_size w, gp_size h)
 	neko_view_repaint(&main_views[cur_view]);
 }
 
+static void show_view(unsigned int i)
+{
+	if (i >= NEKO_MAIN_VIEWS)
+		return;
+
+	if (cur_view == i)
+		return;
+
+	neko_view_hide(&main_views[cur_view]);
+	cur_view = i;
+	neko_view_show(&main_views[cur_view]);
+}
+
 static void backend_event(gp_backend *b)
 {
 	gp_event *ev;
@@ -97,6 +110,13 @@ static void backend_event(gp_backend *b)
 				//generate resize events in backend on rotate!
 				gp_pixmap_rotate_cw(backend->pixmap);
 				resize_views(gp_pixmap_w(backend->pixmap), gp_pixmap_h(backend->pixmap));
+			break;
+			case GP_KEY_F1 ... GP_KEY_F10:
+				show_view(ev->val - GP_KEY_F1);
+			break;
+			case GP_KEY_F11:
+			case GP_KEY_F12:
+				show_view(ev->val - GP_KEY_F11);
 			break;
 			default:
 			break;
