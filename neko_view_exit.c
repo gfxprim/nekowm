@@ -112,11 +112,8 @@ static void exit_event(neko_view *self, gp_event *ev)
 		if (ev->code != GP_EV_KEY_DOWN)
 			break;
 
-		switch (ev->val) {
-		case NEKO_KEYS_FORCE:
+		if (ev->key.key == NEKO_KEYS_FORCE)
 			timeout = 0;
-		break;
-		}
 	break;
 	}
 }

@@ -159,11 +159,9 @@ static void app_event(neko_view *self, gp_event *ev)
 		if (ev->code != GP_EV_KEY_DOWN)
 			break;
 
-		switch (ev->val) {
-		case NEKO_KEYS_QUIT:
+		if (ev->key.key == NEKO_KEYS_QUIT) {
 			neko_view_app_exit(app->cli);
 			return;
-		break;
 		}
 	break;
 	}

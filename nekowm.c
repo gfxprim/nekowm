@@ -85,32 +85,30 @@ static void backend_event(gp_backend *b)
 			if (!gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
 				break;
 
-			switch (ev->val) {
-			case NEKO_KEYS_EXIT:
+			if (ev->key.key == NEKO_KEYS_EXIT) {
 				do_exit(NEKO_VIEW_EXIT_QUIT);
-			break;
-			//TODO: Move to VIEWS
-			case NEKO_KEYS_VIRT_SCREENS_LEFT:
+			} else if (ev->key.key ==  NEKO_KEYS_VIRT_SCREENS_LEFT) {
+				//TODO: Move to VIEWS
 				if (cur_view != 0) {
 					neko_view_hide(&main_views[cur_view]);
 					cur_view--;
 					neko_view_show(&main_views[cur_view]);
 				}
-			break;
-			//TODO: Move to VIEWS
-			case NEKO_KEYS_VIRT_SCREENS_RIGHT:
+			} else if (ev->key.key == NEKO_KEYS_VIRT_SCREENS_RIGHT) {
+				//TODO: Move to VIEWS
 				if (cur_view < NEKO_MAIN_VIEWS-1) {
 					neko_view_hide(&main_views[cur_view]);
 					cur_view++;
 					neko_view_show(&main_views[cur_view]);
 				}
-			break;
-			case NEKO_KEYS_ROTATE:
+			} else if (ev->key.key == NEKO_KEYS_ROTATE) {
 				//TODO: Add gp_backend_rotate_*() functions and
 				//generate resize events in backend on rotate!
 				gp_pixmap_rotate_cw(backend->pixmap);
 				resize_views(gp_pixmap_w(backend->pixmap), gp_pixmap_h(backend->pixmap));
-			break;
+			}
+
+			switch (ev->val) {
 			case GP_KEY_F1 ... GP_KEY_F10:
 				show_view(ev->val - GP_KEY_F1);
 			break;
@@ -121,7 +119,6 @@ static void backend_event(gp_backend *b)
 			default:
 			break;
 			}
-
 		break;
 		case GP_EV_SYS:
 			switch (ev->code) {
@@ -321,6 +318,8 @@ int main(int argc, char *argv[])
 	gp_size h = gp_pixmap_h(backend->pixmap);
 
 	neko_ctx_init(backend, cfg.color_swap, cfg.font_family);
+
+	neko_load_keybindings();
 
 	unsigned int i;
 
