@@ -309,6 +309,9 @@ void neko_view_event(neko_view *self, gp_event *ev)
 	}
 
 	if (self->slot) {
+		if ((ev->type == GP_EV_KEY || ev->type == GP_EV_UTF) &&
+		    gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
+			return;
 		self->slot->ops->event(self, ev);
 		return;
 	}
