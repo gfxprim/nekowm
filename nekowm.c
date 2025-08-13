@@ -37,6 +37,9 @@ static neko_view right_view;
 static neko_view top_view;
 static neko_view bottom_view;
 
+static neko_view bottom_left_view;
+static neko_view bottom_right_view;
+
 static void do_exit(enum neko_view_exit_type exit_type)
 {
 	neko_view_slot *exit_view = neko_view_exit_init(exit_type);
@@ -324,7 +327,10 @@ int main(int argc, char *argv[])
 	unsigned int i;
 
 	for (i = 0; i < NEKO_MAIN_VIEWS; i++) {
-		neko_view_init(&main_views[i], 0, 0, w, h);
+		char name[16];
+
+		snprintf(name, sizeof(name), "View%02i", i);
+		neko_view_init(&main_views[i], 0, 0, w, h, name);
 		main_views[i].slot_exit = slot_exit_running_apps;
 	}
 
@@ -341,8 +347,14 @@ int main(int argc, char *argv[])
 
 	neko_view_slot_put(&top_view, neko_running_apps_init());
 	top_view.slot_exit = slot_exit_running_apps;
-	neko_view_slot_put(&bottom_view, neko_running_apps_init());
-	bottom_view.slot_exit = slot_exit_running_apps;
+
+	neko_subviews_init(&bottom_left_view, &bottom_right_view, &bottom_view, NEKO_VIEW_SPLIT_VERT);
+
+	neko_view_slot_put(&bottom_left_view, neko_running_apps_init());
+	bottom_left_view.slot_exit = slot_exit_running_apps;
+
+	neko_view_slot_put(&bottom_right_view, neko_running_apps_init());
+	bottom_right_view.slot_exit = slot_exit_running_apps;
 
 	neko_view_slot_put(&main_views[1], neko_running_apps_init());
 	neko_view_slot_put(&main_views[2], neko_running_apps_init());

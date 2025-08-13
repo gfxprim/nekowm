@@ -29,6 +29,7 @@ struct neko_view_slot;
  * If view is split it can be split either horizontally or vertically.
  */
 enum neko_view_split_mode {
+	NEKO_VIEW_SPLIT_NONE,
 	NEKO_VIEW_SPLIT_HORIZ,
 	NEKO_VIEW_SPLIT_VERT,
 };
@@ -134,10 +135,24 @@ typedef struct neko_view {
 
 	/** @brief What is shown in the view. */
 	neko_view_slot *slot;
+
+	/** @brief A view name. */
+	char name[32];
 } neko_view;
 
+/**
+ * @brief Initialize a view.
+ *
+ * @param self A view to initialize.
+ * @param x A x offset of the view on a screen.
+ * @param y A y offset of the view on a screen.
+ * @param w A view width in pixels.
+ * @param h A view height in pixels.
+ * @param name A view name.
+ */
 void neko_view_init(neko_view *self,
-                    gp_size x, gp_size y, gp_size w, gp_size h);
+                    gp_size x, gp_size y, gp_size w, gp_size h,
+		    const char *name);
 
 void neko_subviews_init(neko_view *left, neko_view *right, neko_view *parent, enum neko_view_split_mode mode);
 

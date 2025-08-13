@@ -93,6 +93,8 @@ void neko_view_resize(neko_view *self, gp_size w, gp_size h)
 	case NEKO_VIEW_SPLIT_VERT:
 		split_vert(self);
 	break;
+	default:
+	break;
 	}
 }
 
@@ -116,7 +118,8 @@ void neko_view_repaint(neko_view *self)
 }
 
 void neko_view_init(neko_view *self,
-                    gp_size x, gp_size y, gp_size w, gp_size h)
+                    gp_size x, gp_size y, gp_size w, gp_size h,
+		    const char *name)
 {
 	GP_DEBUG(4, "Initializing view %p %ux%u-%ux%u", self, x, y, w, h);
 
@@ -125,14 +128,18 @@ void neko_view_init(neko_view *self,
 	self->w = w;
 	self->h = h;
 
+	self->split_mode = NEKO_VIEW_SPLIT_NONE;
+
 	self->parent = NULL;
+
+	snprintf(self->name, sizeof(self->name), "%s", name);
 
 	empty_view(self);
 }
 
 void neko_subviews_init(neko_view *left, neko_view *right, neko_view *parent, enum neko_view_split_mode mode)
 {
-	GP_DEBUG(4, "Setting up split view parent %p left %p right %p", parent, left, right);
+	GP_DEBUG(4, "Setting up split view parent %p (%s) left %p right %p", parent, parent->name, left, right);
 
 	left->parent = parent;
 	parent->subviews[0] = left;
@@ -149,7 +156,12 @@ void neko_subviews_init(neko_view *left, neko_view *right, neko_view *parent, en
 	case NEKO_VIEW_SPLIT_VERT:
 		split_vert(parent);
 	break;
+	default:
+	return;
 	}
+
+	memset(left->name, 0, sizeof(left->name));
+	memset(right->name, 0, sizeof(right->name));
 
 	empty_view(left);
 	empty_view(right);
@@ -168,7 +180,7 @@ static void view_slot_rem(neko_view *self)
 		return;
 
 	if (self->slot && self->slot->ops->remove) {
-		GP_DEBUG(1, "Removing view %p slot %p", self, self->slot);
+		GP_DEBUG(1, "Removing view %p (%s) slot %p", self, self->name, self->slot);
 		self->slot->ops->remove(self);
 	}
 
@@ -242,7 +254,7 @@ void neko_view_show(neko_view *self)
 	if (!self)
 		return;
 
-	GP_DEBUG(1, "Showing view %p parent %p", self, self->parent);
+	GP_DEBUG(1, "Showing view %p (%s) parent %p", self, self->name, self->parent);
 
 	self->is_shown = 1;
 
@@ -264,7 +276,7 @@ void neko_view_hide(neko_view *self)
 	if (!self)
 		return;
 
-	GP_DEBUG(1, "Hiding view %p parent %p", self, self->parent);
+	GP_DEBUG(1, "Hiding view %p (%s) parent %p", self, self->name, self->parent);
 
 	self->is_shown = 0;
 

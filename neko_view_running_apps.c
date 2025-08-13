@@ -23,13 +23,62 @@ struct running_apps {
 
 #define RUNNING_APPS_PRIV(self) (struct running_apps*)((self)->priv)
 
+static void draw_rectangle(gp_pixmap *pixmap, gp_pixel fg,
+                           neko_view *self, neko_view *bottom,
+			   gp_coord x, gp_coord y, gp_size width, gp_size height)
+{
+	if (self == bottom) {
+		gp_fill_rect_xywh(pixmap, x, y, width, height, fg);
+		return;
+	}
+
+	switch (self->split_mode) {
+	case NEKO_VIEW_SPLIT_NONE:
+		return;
+	case NEKO_VIEW_SPLIT_VERT:
+		draw_rectangle(pixmap, fg, self->subviews[0], bottom, x, y, width/2, height);
+		draw_rectangle(pixmap, fg, self->subviews[1], bottom, x + width/2, y, width/2, height);
+	break;
+	case NEKO_VIEW_SPLIT_HORIZ:
+		draw_rectangle(pixmap, fg, self->subviews[0], bottom, x, y, width, height/2);
+		draw_rectangle(pixmap, fg, self->subviews[1], bottom, x, y + height/2, width, height/2);
+	break;
+	}
+}
+
 static void draw_entry(size_t idx, gp_pixmap *pixmap, gp_pixel fg, gp_pixel bg,
                        gp_coord x, gp_coord y, gp_size w, gp_size h)
 {
 	gp_proxy_cli *cli = neko_view_app_cli(neko_apps[idx]);
+	char *shown = "";
+	char *view_name = "";
+	gp_size width, ascent = gp_text_ascent(ctx.font);
+	neko_view *app_view = neko_apps[idx]->view;
+	neko_view *top = app_view;
 
-	gp_print(pixmap, ctx.font, x, y, GP_ALIGN_RIGHT|GP_VALIGN_BOTTOM,
-		 fg, bg, "%zu: '%s'", idx, cli->name);
+	if (app_view) {
+		shown = " @ ";
+		while (top->parent) {
+			/* Pick up first non-empty name while we traverse the splits up */
+			if (!view_name[0] && top->name[0])
+				view_name = top->name;
+			top = top->parent;
+		}
+		if (!view_name[0] && top->name[0])
+			view_name = top->name;
+	}
+
+	width = gp_print(pixmap, ctx.font, x, y,
+	                 GP_ALIGN_RIGHT|GP_VALIGN_BOTTOM,
+		         fg, bg, "%zu: '%s'%s%s", idx,
+	                 cli->name, shown, view_name);
+
+	/* And now traverse the tree and draw small filled rectangle at that place */
+	if (app_view) {
+		x += width + ascent/2;
+		gp_rect_xywh(pixmap, x, y, ascent, ascent, fg);
+		draw_rectangle(pixmap, fg, top, app_view, x, y, ascent, ascent);
+	}
 }
 
 static void redraw_running_apps(neko_view *view)

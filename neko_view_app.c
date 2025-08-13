@@ -139,6 +139,8 @@ static void app_show(neko_view *self)
 	}
 
 	gp_proxy_cli_show(app->cli, app->shm, &cur_pos);
+
+	neko_running_apps_changed();
 }
 
 void neko_view_app_exit(gp_proxy_cli *cli)
