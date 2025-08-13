@@ -1,5 +1,9 @@
 <map id="neko_view_slot" name="neko_view_slot">
-<area shape="rect" id="node1" title="A view slot content." alt="" coords="20,95,143,121"/>
-<area shape="rect" id="node2" href="$structneko__view.html" title="View a part of a screen." alt="" coords="36,185,127,212"/>
-<area shape="rect" id="node3" href="$structneko__view__slot__ops.html" title="A view slot ops." alt="" coords="5,5,157,32"/>
+<area shape="rect" id="Node000001" title="A view slot content." alt="" coords="20,93,143,119"/>
+<area shape="rect" id="Node000003" href="$structneko__view.html" title="View a part of a screen." alt="" coords="36,183,127,209"/>
+<area shape="poly" id="edge4_Node000003_Node000001" title=" " alt="" coords="58,130,50,143,51,157,58,170,69,181,65,185,54,173,45,158,45,142,54,127"/>
+<area shape="rect" id="Node000002" href="$structneko__view__slot__ops.html" title="A view slot ops." alt="" coords="5,5,157,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="84,45,84,93,79,93,79,45"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="80,169,80,143,79,119,85,119,85,143,85,169"/>
+<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="141,186,149,190,153,196,145,205,127,207,126,202,143,200,148,196,146,194,139,191"/>
 </map>

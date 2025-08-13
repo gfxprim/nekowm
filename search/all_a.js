@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['view_48',['view',['../structneko__view__slot.html#a2efe1e38658282cf1dfb8783a147d5a3',1,'neko_view_slot']]]
+  ['ops_0',['ops',['../structneko__view__slot.html#a5f0d1d9a689574bbd3f70fcd41fbdf56',1,'neko_view_slot']]]
 ];

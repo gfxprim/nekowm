@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['event_75',['event',['../structneko__view__slot__ops.html#a88193b78a6851249af2998e7491320df',1,'neko_view_slot_ops']]],
-  ['exit_76',['exit',['../structneko__view__slot__ops.html#a2e85fd09ce47dfeb226c52abfa61d2ff',1,'neko_view_slot_ops']]]
+  ['backend_0',['backend',['../structneko__ctx.html#a55f05509f2a0a5bf241f5494e448f6ca',1,'neko_ctx']]]
 ];
