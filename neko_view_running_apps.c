@@ -175,6 +175,7 @@ static void show_client(neko_view *view, size_t i)
 void running_apps_event(neko_view *view, gp_event *ev)
 {
 	struct running_apps *apps = RUNNING_APPS_PRIV(view->slot);
+	size_t apps_cnt = gp_vec_len(neko_apps);
 
 	switch (ev->type) {
 	case GP_EV_KEY:
@@ -183,7 +184,7 @@ void running_apps_event(neko_view *view, gp_event *ev)
 
 		switch (ev->val) {
 		case GP_KEY_DOWN:
-			if (apps->app_sel + 1 >= gp_vec_len(neko_apps))
+			if (apps->app_sel + 1 >= apps_cnt)
 				return;
 
 			apps->app_sel++;
@@ -194,6 +195,45 @@ void running_apps_event(neko_view *view, gp_event *ev)
 				return;
 
 			apps->app_sel--;
+			redraw_running_apps(view);
+		break;
+		case GP_KEY_HOME:
+			if (apps->app_sel == 0)
+				return;
+
+			apps->app_sel = 0;
+			redraw_running_apps(view);
+		break;
+		case GP_KEY_END:
+			if (!apps_cnt)
+				return;
+
+			if (apps->app_sel == apps_cnt - 1)
+				return;
+
+			apps->app_sel = apps_cnt - 1;
+			redraw_running_apps(view);
+		break;
+		case GP_KEY_PAGE_UP:
+			if (apps->app_sel == 0)
+				return;
+
+			if (apps->app_sel < 5)
+				apps->app_sel = 0;
+			else
+				apps->app_sel -= 5;
+
+			redraw_running_apps(view);
+		break;
+		case GP_KEY_PAGE_DOWN:
+			if (apps->app_sel == apps_cnt - 1)
+				return;
+
+			if (apps->app_sel + 5 >= apps_cnt - 1)
+				apps->app_sel = apps_cnt - 1;
+			else
+				apps->app_sel += 5;
+
 			redraw_running_apps(view);
 		break;
 		case GP_KEY_ENTER:
