@@ -174,7 +174,7 @@ gp_pixmap *neko_view_pixmap(neko_view *self)
 	return &self->buf;
 }
 
-static void view_slot_rem(neko_view *self)
+void neko_view_slot_rem(neko_view *self)
 {
 	if (!self)
 		return;
@@ -192,13 +192,13 @@ static void view_slot_rem(neko_view *self)
 
 void neko_view_slot_put(neko_view *self, neko_view_slot *slot)
 {
-	view_slot_rem(self);
+	neko_view_slot_rem(self);
 
 	self->slot = slot;
 
 	if (slot) {
 		neko_view *view = slot->view;
-		view_slot_rem(view);
+		neko_view_slot_rem(view);
 		neko_view_slot_exit(view);
 
 		slot->view = self;
@@ -321,9 +321,6 @@ void neko_view_event(neko_view *self, gp_event *ev)
 	}
 
 	if (self->slot) {
-		if ((ev->type == GP_EV_KEY || ev->type == GP_EV_UTF) &&
-		    gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
-			return;
 		self->slot->ops->event(self, ev);
 		return;
 	}

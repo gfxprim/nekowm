@@ -164,9 +164,18 @@ static void app_event(neko_view *self, gp_event *ev)
 		if (ev->key.key == NEKO_KEYS_QUIT) {
 			neko_view_app_exit(app->cli);
 			return;
+		} else if (ev->key.key == NEKO_KEYS_LIST_APPS) {
+			app_hide(self);
+			neko_view_slot_rem(self);
+			neko_view_slot_exit(self);
+			neko_running_apps_changed();
 		}
 	break;
 	}
+
+	if ((ev->type == GP_EV_KEY || ev->type == GP_EV_UTF) &&
+	    gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
+		return;
 
 	gp_proxy_cli_event(app->cli, ev);
 }

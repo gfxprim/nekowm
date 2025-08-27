@@ -174,6 +174,13 @@ neko_view *neko_view_focused_child(neko_view *self);
  */
 int neko_view_is_focused(neko_view *self);
 
+/**
+ * @brief Removes a slot from a view.
+ *
+ * @param self A neko view.
+ */
+void neko_view_slot_rem(neko_view *self);
+
 static inline int neko_view_is_shown(neko_view *self)
 {
 	if (!self)
