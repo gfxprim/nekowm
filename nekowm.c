@@ -90,6 +90,8 @@ static void backend_event(gp_backend *b)
 
 			if (ev->key.key == NEKO_KEYS_EXIT) {
 				do_exit(NEKO_VIEW_EXIT_QUIT);
+			} else if (ev->key.key == NEKO_KEYS_POWEROFF) {
+				do_exit(NEKO_VIEW_EXIT_POWEROFF);
 			} else if (ev->key.key ==  NEKO_KEYS_VIRT_SCREENS_LEFT) {
 				//TODO: Move to VIEWS
 				if (cur_view != 0) {

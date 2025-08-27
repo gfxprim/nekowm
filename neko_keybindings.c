@@ -28,6 +28,7 @@ struct neko_keybinding neko_keybindings[] = {
 	[NEKO_KEYS_VIRT_SCREENS_RIGHT_IDX] = NEKO_KEYS_VIRT_SCREENS_RIGHT_DEF,
 	[NEKO_KEYS_ROTATE_IDX] = NEKO_KEYS_ROTATE_DEF,
 	[NEKO_KEYS_HELP_IDX] = NEKO_KEYS_HELP_DEF,
+	[NEKO_KEYS_POWEROFF_IDX] = NEKO_KEYS_POWEROFF_DEF,
 };
 
 static void set_keybinding(gp_json_reader *json, const char *key_name, const char *key_val)

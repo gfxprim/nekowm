@@ -46,6 +46,7 @@ enum neko_keybindings_idx {
 	NEKO_KEYS_VIRT_SCREENS_RIGHT_IDX,
 	NEKO_KEYS_ROTATE_IDX,
 	NEKO_KEYS_HELP_IDX,
+	NEKO_KEYS_POWEROFF_IDX,
 };
 
 /* Default keybindings. */
@@ -60,6 +61,7 @@ enum neko_keybindings_idx {
 #define NEKO_KEYS_VIRT_SCREENS_RIGHT_DEF {"View_Right", GP_KEY_RIGHT}
 #define NEKO_KEYS_ROTATE_DEF {"Rotate_Screen", GP_KEY_R}
 #define NEKO_KEYS_HELP_DEF {"Help", GP_KEY_H}
+#define NEKO_KEYS_POWEROFF_DEF {"Power_Off", GP_KEY_P}
 
 /** @brief Modifier key needed to be pressed to send keypresses to the WM. */
 #define NEKO_KEYS_MOD_WM neko_keybindings[NEKO_KEYS_MOD_WM_IDX].key
@@ -93,6 +95,9 @@ enum neko_keybindings_idx {
 
 /** @brief Displays a help. */
 #define NEKO_KEYS_HELP neko_keybindings[NEKO_KEYS_HELP_IDX].key
+
+/** @brief Powers off the machine. */
+#define NEKO_KEYS_POWEROFF neko_keybindings[NEKO_KEYS_POWEROFF_IDX].key
 
 /**
  * @brief Loads keybindings from a file.
