@@ -36,12 +36,12 @@ static void draw_rectangle(gp_pixmap *pixmap, gp_pixel fg,
 	case NEKO_VIEW_SPLIT_NONE:
 		return;
 	case NEKO_VIEW_SPLIT_VERT:
-		draw_rectangle(pixmap, fg, self->subviews[0], bottom, x, y, width/2, height);
-		draw_rectangle(pixmap, fg, self->subviews[1], bottom, x + width/2, y, width/2, height);
+		draw_rectangle(pixmap, fg, self->subviews[0], bottom, x, y, (width+1)/2, height);
+		draw_rectangle(pixmap, fg, self->subviews[1], bottom, x + width/2, y, (width+1)/2, height);
 	break;
 	case NEKO_VIEW_SPLIT_HORIZ:
-		draw_rectangle(pixmap, fg, self->subviews[0], bottom, x, y, width, height/2);
-		draw_rectangle(pixmap, fg, self->subviews[1], bottom, x, y + height/2, width, height/2);
+		draw_rectangle(pixmap, fg, self->subviews[0], bottom, x, y, width, (height+1)/2);
+		draw_rectangle(pixmap, fg, self->subviews[1], bottom, x, y + height/2, width, (height+1)/2);
 	break;
 	}
 }
