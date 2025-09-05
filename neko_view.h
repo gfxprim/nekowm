@@ -125,6 +125,8 @@ typedef struct neko_view {
 
 	/** @brief Set if view is shown on a screen. */
 	unsigned int is_shown:1;
+	/** @brief Set if the view has focus. */
+	unsigned int is_focused:1;
 
 	/** @brief A view may be split into two subviews. */
 	struct neko_view *subviews[2];
@@ -274,8 +276,56 @@ void neko_view_resize(neko_view *self, gp_size w, gp_size h);
  */
 void neko_view_repaint(neko_view *self);
 
+/**
+ * @brief Switches a view shown on a display.
+ *
+ * Before new view is shown current while, if any, must be hidden with
+ * neko_view_hide().
+ *
+ * @param self A view to be shown.
+ */
 void neko_view_show(neko_view *self);
 
+/**
+ * @brief Hides a view from a display.
+ *
+ * This function can be called only on a view that is currently shown on a
+ * screen.
+ *
+ * @param self A currently shown view.
+ */
 void neko_view_hide(neko_view *self);
+
+/**
+ * @brief Sends a focus in event to the view event handler.
+ *
+ * @param self A view.
+ */
+static inline void neko_view_focus_in(neko_view *self)
+{
+	gp_event ev = {
+		.type = GP_EV_SYS,
+		.code = GP_EV_SYS_FOCUS,
+		.val = GP_EV_SYS_FOCUS_IN,
+	};
+
+	neko_view_event(self, &ev);
+}
+
+/**
+ * @brief Sends a focus out event to the view event handler.
+ *
+ * @param self A view.
+ */
+static inline void neko_view_focus_out(neko_view *self)
+{
+	gp_event ev = {
+		.type = GP_EV_SYS,
+		.code = GP_EV_SYS_FOCUS,
+		.val = GP_EV_SYS_FOCUS_OUT,
+	};
+
+	neko_view_event(self, &ev);
+}
 
 #endif /* NEKO_VIEW_H */

@@ -192,6 +192,7 @@ void neko_view_slot_rem(neko_view *self)
 
 void neko_view_slot_put(neko_view *self, neko_view_slot *slot)
 {
+	//TODO: Focus out?
 	neko_view_slot_rem(self);
 
 	self->slot = slot;
@@ -207,6 +208,9 @@ void neko_view_slot_put(neko_view *self, neko_view_slot *slot)
 			GP_DEBUG(1, "Showing view %p slot %p", self, self->slot);
 			slot->ops->show(self);
 		}
+
+		if (neko_view_is_focused(self))
+			neko_view_focus_in(self);
 	}
 }
 
@@ -217,7 +221,6 @@ neko_view *neko_view_focused_child(neko_view *view)
 
 int neko_view_is_focused(neko_view *view)
 {
-	/* root view is always focused */
 	if (!view->parent)
 		return 1;
 
@@ -227,7 +230,9 @@ int neko_view_is_focused(neko_view *view)
 static int try_switch_focus(neko_view *view)
 {
 	if (view->subviews[0] && view->subviews[1]) {
+		neko_view_focus_out(view->subviews[view->focused_subview]);
 		view->focused_subview = !view->focused_subview;
+		neko_view_focus_in(view->subviews[view->focused_subview]);
 		neko_view_repaint(view);
 		return 1;
 	}
@@ -307,13 +312,17 @@ void neko_view_event(neko_view *self, gp_event *ev)
 	break;
 	case GP_EV_REL:
 		if (ev->code == GP_EV_REL_POS) {
-			if (cursor_in_view(self->subviews[0], ev)) {
+			if (cursor_in_view(self->subviews[0], ev) && self->focused_subview == 1) {
+				neko_view_focus_out(self->subviews[self->focused_subview]);
 				self->focused_subview = 0;
+				neko_view_focus_in(self->subviews[self->focused_subview]);
 				neko_view_repaint(self);
 			}
 
-			if (cursor_in_view(self->subviews[1], ev)) {
+			if (cursor_in_view(self->subviews[1], ev) && self->focused_subview == 0) {
+				neko_view_focus_out(self->subviews[self->focused_subview]);
 				self->focused_subview = 1;
+				neko_view_focus_in(self->subviews[self->focused_subview]);
 				neko_view_repaint(self);
 			}
 		}

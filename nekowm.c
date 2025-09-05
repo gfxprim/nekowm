@@ -56,7 +56,7 @@ static void resize_views(gp_size w, gp_size h)
 	neko_view_repaint(&main_views[cur_view]);
 }
 
-static void show_view(unsigned int i)
+static void show_view(unsigned int i, int wm_is_focused)
 {
 	if (i >= NEKO_MAIN_VIEWS)
 		return;
@@ -64,13 +64,22 @@ static void show_view(unsigned int i)
 	if (cur_view == i)
 		return;
 
+	/* send focus out event to the focused app */
+	if (wm_is_focused)
+		neko_view_focus_out(&main_views[cur_view]);
 	neko_view_hide(&main_views[cur_view]);
+
 	cur_view = i;
+
+	/* And focus in event to the focused app */
+	if (wm_is_focused)
+		neko_view_focus_in(&main_views[cur_view]);
 	neko_view_show(&main_views[cur_view]);
 }
 
 static void backend_event(gp_backend *b)
 {
+	static int wm_is_focused = 0;
 	gp_event *ev;
 
 	while ((ev = gp_backend_ev_get(b))) {
@@ -115,11 +124,11 @@ static void backend_event(gp_backend *b)
 
 			switch (ev->val) {
 			case GP_KEY_F1 ... GP_KEY_F10:
-				show_view(ev->val - GP_KEY_F1);
+				show_view(ev->val - GP_KEY_F1, wm_is_focused);
 			break;
 			case GP_KEY_F11:
 			case GP_KEY_F12:
-				show_view(ev->val - GP_KEY_F11);
+				show_view(ev->val - GP_KEY_F11, wm_is_focused);
 			break;
 			default:
 			break;
@@ -130,6 +139,12 @@ static void backend_event(gp_backend *b)
 			case GP_EV_SYS_QUIT:
 				do_exit(NEKO_VIEW_EXIT_QUIT);
 			break;
+			case GP_EV_SYS_FOCUS:
+				wm_is_focused = ev->val;
+				neko_view_event(&main_views[cur_view], ev);
+			break;
+			case GP_EV_SYS_VISIBILITY:
+				return;
 			case GP_EV_SYS_RESIZE:
 				gp_backend_resize_ack(b);
 				resize_views(ev->sys.w, ev->sys.h);
