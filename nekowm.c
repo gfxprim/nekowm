@@ -194,7 +194,7 @@ static enum gp_poll_event_ret server_event(gp_fd *self)
 	int fd;
 
 	while ((fd = accept(self->fd, NULL, NULL)) > 0) {
-		struct gp_proxy_cli_init_ init = {
+		struct gp_proxy_cli_init init = {
 			.pixel_type = backend->pixmap->pixel_type,
 			.dpi = backend->dpi,
 		};
