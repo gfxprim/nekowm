@@ -1,12 +1,12 @@
 [Unit]
-Description="NekoWM startup service"
+Description="NekoWM login startup service"
 After=basic.target systemd-udev-settle.service
 Wants=basic.target systemd-udev-settle.service
 
 [Service]
 Restart=on-failure
 RestartSec=1s
-ExecStart=/usr/bin/nekowm
+ExecStart=/usr/bin/nekowm-login
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

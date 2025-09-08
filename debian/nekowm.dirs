@@ -1,4 +1,5 @@
 usr/bin/
 usr/share/applications/
 usr/share/nekowm/
-lib/systemd/system/
+usr/lib/systemd/system/
+usr/lib/systemd/user/

@@ -27,8 +27,10 @@ install:
 	install -m 644 $(BIN).desktop -t $(DESTDIR)/usr/share/applications/
 	install -d $(DESTDIR)/usr/share/$(BIN)/
 	install -m 644 $(BIN).png -t $(DESTDIR)/usr/share/$(BIN)/
-	install -d $(DESTDIR)/lib/systemd/system/
-	install -m 644 $(BIN).service -t $(DESTDIR)/lib/systemd/system/
+	install -d $(DESTDIR)/usr/lib/systemd/system/
+	install -m 644 $(BIN)-login.service -t $(DESTDIR)/usr/lib/systemd/system/
+	install -d $(DESTDIR)/usr/lib/systemd/user/
+	install -m 644 $(BIN).service -t $(DESTDIR)/usr//lib/systemd/user/
 
 clean:
 	rm -f $(BIN) *.dep *.o
