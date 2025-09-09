@@ -1,11 +1,13 @@
 # A window manager for GFXprim proxy backend
 
-![nekowm](nekowm-color.png)
-
 A GFXprim proxy backend allows you to display applications into a SHM buffer.
 
 Nekowm is a simple manager that allows you to switch between different
 applications connected to the proxy buffer.
+
+![nekowm](nekowm-color.png)
+
+## Animation
 
 ![nekowm-screenshots](nekowm-screenshots.png)
 
@@ -60,6 +62,7 @@ a user with:
 
 ```
 systemctl enable --user nekowm
+loginctl enable-linger user
 ```
 
 Or you can enable the NekoWM login daemon with:
