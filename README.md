@@ -51,9 +51,14 @@ The `/etc/nekowm.conf` looks like:
  ...
 }
 ```
-
 Where `$DISPLAY_MODEL` is set to gfxprim display model.
 
+Other options:
+
+- "rotate" values "90", "180", "270"
+
+- "font\_family" can be set to gfxprim compiled-in family font name
+                 available fonts can be listed with `nekowm -f help`
 
 ## Booting into nekowm
 
