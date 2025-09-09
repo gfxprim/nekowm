@@ -21,6 +21,7 @@
 #include "neko_view_running_apps.h"
 #include "neko_view_app.h"
 #include "neko_view_exit.h"
+#include "neko_logo.h"
 
 static gp_backend *backend;
 
@@ -333,6 +334,10 @@ int main(int argc, char *argv[])
 	case DISPLAY_ROTATE_0:
 	break;
 	}
+
+	neko_logo_render(backend->pixmap, &neko_logo_text, 0, !cfg.color_swap);
+	gp_backend_flip(backend);
+	sleep(1);
 
 	gp_size w = gp_pixmap_w(backend->pixmap);
 	gp_size h = gp_pixmap_h(backend->pixmap);

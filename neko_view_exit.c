@@ -17,6 +17,7 @@
 #include "neko_ctx.h"
 #include "neko_view_app.h"
 #include "neko_view_exit.h"
+#include "neko_logo.h"
 
 static enum neko_view_exit_type exit_type;
 static int timeout = 30;
@@ -51,8 +52,12 @@ static void do_poweroff(void)
 static void print_poweroff(neko_view *self, gp_size w, gp_size h, gp_size ta)
 {
 	gp_pixmap *pixmap = neko_view_pixmap(self);
-	gp_fill(pixmap, ctx.col_bg);
-	gp_print(pixmap, ctx.font_bold, w/2, h/2, GP_ALIGN_CENTER|GP_VALIGN_CENTER,
+
+	neko_logo_render(pixmap, &neko_logo_cat, h/5, ctx.dark_theme);
+
+	gp_coord y = h/2 + h/4;
+
+	gp_print(pixmap, ctx.font_bold, w/2, y, GP_ALIGN_CENTER|GP_VALIGN_CENTER,
 		         ctx.col_fg, ctx.col_bg,
 	                 "\u00ab Machine is powered off \u00bb");
 	neko_view_flip(self);
@@ -68,20 +73,22 @@ static void exit_show(neko_view *self)
 	gp_size h = gp_pixmap_h(pixmap);
 	gp_size ta = gp_text_ascent(ctx.font);
 
-	gp_fill(pixmap, ctx.col_bg);
+	neko_logo_render(pixmap, &neko_logo_cat, h/5, ctx.dark_theme);
 
-	gp_print(pixmap, ctx.font_bold, w/2, h/2 - 2*ta, GP_ALIGN_CENTER|GP_VALIGN_CENTER,
+	gp_coord y = h/2 + h/4;
+
+	gp_print(pixmap, ctx.font_bold, w/2, y - 2*ta, GP_ALIGN_CENTER|GP_VALIGN_CENTER,
 		         ctx.col_fg, ctx.col_bg,
 	                 "\u00ab %s \u00bb", exit_type == NEKO_VIEW_EXIT_POWEROFF ? "Powering off" : "Exitting");
 
-	gp_print(pixmap, ctx.font, w/2, h/2, GP_ALIGN_CENTER|GP_VALIGN_CENTER,
+	gp_print(pixmap, ctx.font, w/2, y, GP_ALIGN_CENTER|GP_VALIGN_CENTER,
 		         ctx.col_fg, ctx.col_bg,
 	                 "Press %s+%s to force %s.",
 			 gp_ev_key_name(NEKO_KEYS_MOD_WM), gp_ev_key_name(NEKO_KEYS_FORCE),
 	                 exit_type == NEKO_VIEW_EXIT_POWEROFF ? "power off" : "exit");
 
 
-	gp_print(pixmap, ctx.font, w/2, h/2 + 2*ta, GP_ALIGN_CENTER|GP_VALIGN_CENTER,
+	gp_print(pixmap, ctx.font, w/2, y + 2*ta, GP_ALIGN_CENTER|GP_VALIGN_CENTER,
 		         ctx.col_fg, ctx.col_bg,
 	                 "Running apps %zu timeout %is",
 	                 gp_vec_len(neko_apps), timeout);

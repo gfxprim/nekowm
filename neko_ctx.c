@@ -44,6 +44,8 @@ void neko_ctx_init(gp_backend *backend, int reverse, const char *font_family)
 	if (reverse)
 		GP_SWAP(ctx.col_bg, ctx.col_fg);
 
+	ctx.dark_theme = !reverse;
+
 	if (reverse)
 		ctx.col_sel = gp_rgb_to_pixmap_pixel(0xa0, 0xc0, 0xff, backend->pixmap);
 	else

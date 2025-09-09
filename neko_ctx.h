@@ -34,6 +34,8 @@ struct neko_ctx {
 	 */
 	gp_pixel col_sel;
 
+	uint32_t dark_theme:1;
+
 	gp_size padd;
 
 	/**
