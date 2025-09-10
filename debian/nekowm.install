@@ -4,3 +4,4 @@ usr/share/applications/nekowm.desktop
 usr/share/nekowm/nekowm.png
 usr/lib/systemd/system/nekowm-login.service
 usr/lib/systemd/user/nekowm.service
+usr/share/man/man1/nekowm.1

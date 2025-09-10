@@ -1,0 +1,127 @@
+'\" t
+.nh
+.TH NekoWM setup
+.SH Setting up user and groups
+NekoWM runs under regular user account. In order to do that it needs to be able
+to access input devices and display.
+
+.PP
+To enable input devices:
+
+.EX
+sudo usermod -a -G input $USER
+.EE
+
+.PP
+To enable SPI display:
+
+.EX
+sudo usermod -a -G gpio,spi $USER
+.EE
+
+.PP
+To enable HDMI/VGA display:
+
+.EX
+sudo usermod -a -G video $USER
+.EE
+
+.PP
+Where \fB$USER\fR is the username the NekoWM will run under.
+
+.SH Setting up nekowm.conf
+After that the configuration file may need to be created. In the case of SPI
+display NekoWM needs to know which display it talks to:
+
+.PP
+The \fB/etc/nekowm.conf\fR looks like:
+
+.EX
+{
+ "backend_opts": "display:$DISPLAY_MODEL",
+ ...
+}
+.EE
+
+.PP
+Where \fB$DISPLAY_MODEL\fR is set to gfxprim display model.
+
+.PP
+Other options:
+.IP \(bu 2
+"rotate" values "90", "180", "270"
+.IP \(bu 2
+"font_family" can be set to gfxprim compiled-in family font name
+             available fonts can be listed with \fBnekowm -f help\fR
+.IP \(bu 2
+"theme" can be set to 'light' or 'dark'
+
+.SH Booting into nekowm
+To boot directly to NekoWM without need to login enable the \fBnekowm.service\fR as
+a user with:
+
+.EX
+systemctl enable --user nekowm
+loginctl enable-linger user
+.EE
+
+.PP
+Or you can enable the NekoWM login daemon with:
+
+.EX
+sudo systemctl enable nekowm-login.service
+.EE
+
+.SH Setting up keybindings
+.SS Keys and description
+.TS
+allbox;
+l l l 
+l l l .
+\fBKey Name\fP	\fBDefault\fP	\fBDescription\fP
+"WM_Mod"	KeyLeftMeta	T{
+Key needed to be pressed so that folling keys take effect.
+T}
+"App_Quit"	KeyQ	T{
+Quits currently shown and focused application.
+T}
+"WM_Exit"	KeyX	T{
+Shuts down all running applications and exits NekoWM.
+T}
+"WM_Force"	KeyF	T{
+Forces an action, e.g. NekoWM stuck at shutdown.
+T}
+"List_Apps"	KeyL	T{
+Hides currently displayed application and shows list of running applications.
+T}
+"Switch_Focus"	KeyTab	T{
+Switches focus when screen is split into more views (windows).
+T}
+"View_Left"	KeyLeft	T{
+Switches to a view (virtual screen) on the left side.
+T}
+"View_Right"	KeyRight	T{
+Switches to a view (virtual screen) on the right side.
+T}
+"Rotate_Screen"	KeyR	Rotates screen by 90 degrees.
+"Power_Off"	KeyP	Starts poweroff sequence.
+.TE
+
+.PP
+Certain key combinations are hardcoded these are:
+.IP \(bu 2
+"WM_Mod" + F1..F12 that switches between views (virtual screens)
+
+.SS Configuration file
+Keybindings can be changed in \fB$HOME/.config/nekowm/keybindings.json\fR configuration file.
+
+.PP
+Example:
+
+.EX
+{
+ "WM_Mod": "KeyLeftAlt",
+ "View_Left": "KeyLeftBrace",
+ "View_Right": "KeyRighttBrace"
+}
+.EE

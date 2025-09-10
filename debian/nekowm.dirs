@@ -3,3 +3,4 @@ usr/share/applications/
 usr/share/nekowm/
 usr/lib/systemd/system/
 usr/lib/systemd/user/
+usr/share/man/man1/

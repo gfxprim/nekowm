@@ -17,6 +17,9 @@ all: $(BIN) $(BIN_LOGIN) $(DEP)
 $(BIN): $(filter-out login.o nekowm-login.o,$(OBJ))
 $(BIN_LOGIN): login.o
 
+man:
+	go-md2man  -in SETUP.md -out nekowm.1
+
 -include $(DEP)
 
 install:
@@ -30,7 +33,9 @@ install:
 	install -d $(DESTDIR)/usr/lib/systemd/system/
 	install -m 644 $(BIN)-login.service -t $(DESTDIR)/usr/lib/systemd/system/
 	install -d $(DESTDIR)/usr/lib/systemd/user/
-	install -m 644 $(BIN).service -t $(DESTDIR)/usr//lib/systemd/user/
+	install -m 644 $(BIN).service -t $(DESTDIR)/usr/lib/systemd/user/
+	install -d $(DESTDIR)/usr/share/man/man1/
+	install -m 644 $(BIN).1 -t $(DESTDIR)/usr/share/man/man1/
 
 clean:
 	rm -f $(BIN) *.dep *.o
