@@ -17,6 +17,12 @@
 #include <core/gp_types.h>
 #include <backends/gp_types.h>
 
+enum neko_theme {
+	NEKO_THEME_LIGHT,
+	NEKO_THEME_DARK,
+	NEKO_THEME_INVALID = -1,
+};
+
 /**
  * @brief A global context.
  */
@@ -34,7 +40,10 @@ struct neko_ctx {
 	 */
 	gp_pixel col_sel;
 
-	uint32_t dark_theme:1;
+	/**
+	 * @brief Neko theme.
+	 */
+	enum neko_theme theme;
 
 	gp_size padd;
 
@@ -56,6 +65,6 @@ struct neko_ctx {
 
 extern struct neko_ctx ctx;
 
-void neko_ctx_init(gp_backend *backend, int reverse, const char *font_family);
+void neko_ctx_init(gp_backend *backend, enum neko_theme theme, const char *font_family);
 
 #endif /* NEKO_CTX_H */

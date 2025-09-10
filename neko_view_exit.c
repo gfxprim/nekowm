@@ -53,7 +53,7 @@ static void print_poweroff(neko_view *self, gp_size w, gp_size h, gp_size ta)
 {
 	gp_pixmap *pixmap = neko_view_pixmap(self);
 
-	neko_logo_render(pixmap, &neko_logo_cat, h/5, ctx.dark_theme);
+	neko_logo_render(pixmap, &neko_logo_cat, h/5);
 
 	gp_coord y = h/2 + h/4;
 
@@ -73,7 +73,7 @@ static void exit_show(neko_view *self)
 	gp_size h = gp_pixmap_h(pixmap);
 	gp_size ta = gp_text_ascent(ctx.font);
 
-	neko_logo_render(pixmap, &neko_logo_cat, h/5, ctx.dark_theme);
+	neko_logo_render(pixmap, &neko_logo_cat, h/5);
 
 	gp_coord y = h/2 + h/4;
 

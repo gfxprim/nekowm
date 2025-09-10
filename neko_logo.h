@@ -102,6 +102,6 @@ static inline struct neko_logo neko_logo_text = {
 	}
 };
 
-void neko_logo_render(gp_pixmap *pixmap, struct neko_logo *logo, gp_size y_off, int dark_theme);
+void neko_logo_render(gp_pixmap *pixmap, struct neko_logo *logo, gp_size y_off);
 
 #endif /* NEKO_LOGO_H */

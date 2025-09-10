@@ -211,15 +211,14 @@ struct neko_config {
 	char backend_opts[256];
 	char font_family[256];
 	char rotate[4];
-	bool color_swap;
+	char theme[64];
 };
 
 static struct gp_json_struct neko_cfg_desc[] = {
 	GP_JSON_SERDES_STR_CPY(struct neko_config, backend_opts, GP_JSON_SERDES_OPTIONAL, 256),
-	GP_JSON_SERDES_BOOL(struct neko_config, color_swap, GP_JSON_SERDES_OPTIONAL),
 	GP_JSON_SERDES_STR_CPY(struct neko_config, font_family, GP_JSON_SERDES_OPTIONAL, 256),
-	//TODO: Add enum serdes?
 	GP_JSON_SERDES_STR_CPY(struct neko_config, rotate, GP_JSON_SERDES_OPTIONAL, 4),
+	GP_JSON_SERDES_STR_CPY(struct neko_config, theme, GP_JSON_SERDES_OPTIONAL, 64),
 	{}
 };
 
@@ -229,7 +228,7 @@ static void print_help(const char *name)
 	printf("\t-b backend options, pass 'help' for help\n");
 	printf("\t-f font family, pass 'help' for help\n");
 	printf("\t-r rotate display 90, 180, 270 degrees\n");
-	printf("\t-s swap fg and bg colors (default is white on black)\n");
+	printf("\t-t theme either 'dark' or 'light'\n");
 }
 
 enum display_rotation {
@@ -257,22 +256,39 @@ static enum display_rotation str_to_rot(char *rotate)
 		return DISPLAY_ROTATE_INVALID;
 }
 
+static enum neko_theme str_to_theme(const char *theme)
+{
+	if (!strcmp(theme, "light"))
+		return NEKO_THEME_LIGHT;
+	else if (!strcmp(theme, "dark"))
+		return NEKO_THEME_DARK;
+	else
+		return NEKO_THEME_INVALID;
+}
+
 int main(int argc, char *argv[])
 {
 	int opt;
 	struct neko_config cfg = {
 		.font_family = "haxor-narrow-18",
+		.theme = "dark",
 	};
-
+	enum neko_theme theme;
 	enum display_rotation display_rotation = DISPLAY_ROTATE_0;
 
 	load_cfg(&cfg);
 
 	display_rotation = str_to_rot(cfg.rotate);
+	theme = str_to_theme(cfg.theme);
+
+	if (theme == NEKO_THEME_INVALID) {
+		fprintf(stderr, "Invalid theme from config!\n");
+		theme = NEKO_THEME_DARK;
+	}
 
 	signal(SIGPIPE, SIG_IGN);
 
-	while ((opt = getopt(argc, argv, "b:f:hr:s")) != -1) {
+	while ((opt = getopt(argc, argv, "b:f:hr:t:")) != -1) {
 	switch (opt) {
 		case 'b':
 			strncpy(cfg.backend_opts, optarg, sizeof(cfg.backend_opts)-1);
@@ -286,14 +302,19 @@ int main(int argc, char *argv[])
 		break;
 		case 'r':
 			display_rotation = str_to_rot(optarg);
-
 			if (display_rotation == DISPLAY_ROTATE_INVALID) {
+				fprintf(stderr, "Invalid rotation '%s'\n", optarg);
 				print_help(argv[0]);
 				exit(1);
 			}
 		break;
-		case 's':
-			cfg.color_swap = true;
+		case 't':
+			theme = str_to_theme(optarg);
+			if (theme == NEKO_THEME_INVALID) {
+				fprintf(stderr, "Invalid theme '%s'\n", optarg);
+				print_help(argv[0]);
+				exit(1);
+			}
 		break;
 		default:
 			print_help(argv[0]);
@@ -335,14 +356,14 @@ int main(int argc, char *argv[])
 	break;
 	}
 
-	neko_logo_render(backend->pixmap, &neko_logo_text, 0, !cfg.color_swap);
+	neko_ctx_init(backend, theme, cfg.font_family);
+
+	neko_logo_render(backend->pixmap, &neko_logo_text, 0);
 	gp_backend_flip(backend);
 	sleep(1);
 
 	gp_size w = gp_pixmap_w(backend->pixmap);
 	gp_size h = gp_pixmap_h(backend->pixmap);
-
-	neko_ctx_init(backend, cfg.color_swap, cfg.font_family);
 
 	neko_load_keybindings();
 

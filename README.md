@@ -60,6 +60,8 @@ Other options:
 - "font\_family" can be set to gfxprim compiled-in family font name
                  available fonts can be listed with `nekowm -f help`
 
+- "theme" can be set to 'light' or 'dark'
+
 ## Booting into nekowm
 
 To boot directly to NekoWM without need to login enable the `nekowm.service` as
