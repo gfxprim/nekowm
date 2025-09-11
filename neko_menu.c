@@ -34,20 +34,26 @@ void neko_menu_repaint(struct neko_menu *menu, gp_pixmap *pixmap)
 
 	gp_fill(pixmap, ctx.col_bg);
 
+	gp_pixel frame_col = menu->focused ? ctx.col_fin_fr : ctx.col_fout_fr;
+	gp_pixel heading_bg = menu->focused ? ctx.col_fin_bg : ctx.col_fout_bg;
+
 	if (menu->heading) {
 		gp_text_style *font = menu->focused ? ctx.font_bold : ctx.font;
 
-		if (menu->focused)
-			gp_fill_rect_xywh(pixmap, 0, 0, w, 2*ctx.padd + ta, ctx.col_sel);
+		gp_fill_rect_xywh(pixmap, 0, 0, w, 2*ctx.padd + ta, heading_bg);
 
 		gp_print(pixmap, font, w/2, cur_y, GP_ALIGN_CENTER|GP_VALIGN_BOTTOM,
 		         ctx.col_fg, ctx.col_bg, "\u00ab %s \u00bb", menu->heading);
 
-		cur_y += 2 * ctx.padd + ta;
-		gp_hline_xyw(pixmap, 0, cur_y-ctx.padd, w, ctx.col_fg);
+		cur_y += ctx.padd + ta;
+		gp_vline_xyh(pixmap, 0, 0, cur_y, frame_col);
+		gp_vline_xyh(pixmap, w-1, 0, cur_y, frame_col);
+		gp_hline_xyw(pixmap, 0, 0, w, frame_col);
 	}
 
-	gp_rect_xywh(pixmap, 0, 0, w, h, ctx.col_fg);
+	gp_rect_xywh(pixmap, 0, cur_y, w, h-cur_y, frame_col);
+
+	cur_y += ctx.padd;
 
 	menu->items_offset = GP_MAX(menu->items_offset, min_offset(menu->item_sel, last_y - cur_y - ta - ctx.padd, eh));
 	menu->items_offset = GP_MIN(menu->items_offset, menu->item_sel);
@@ -70,11 +76,10 @@ void neko_menu_repaint(struct neko_menu *menu, gp_pixmap *pixmap)
 		gp_pixel bg = ctx.col_bg;
 
 		if (idx == menu->item_sel) {
-		//	gp_symbol(pixmap, p, cur_y + eh/2, p/2, p/2, GP_TRIANGLE_LEFT, ctx.col_fg);
-		//	gp_symbol(pixmap, w-p, cur_y + eh/2, p/2, p/2, GP_TRIANGLE_RIGHT, ctx.col_fg);
-			bg = ctx.col_sel;
-			gp_fill_rect_xywh(pixmap, p, cur_y, w-2*p, eh, bg);
-			gp_rect_xywh(pixmap, p, cur_y, w-2*p, eh, fg);
+			//gp_symbol(pixmap, p, cur_y + eh/2, p/2, p/2, GP_TRIANGLE_LEFT, ctx.col_fg);
+			//gp_symbol(pixmap, w-p, cur_y + eh/2, p/2, p/2, GP_TRIANGLE_RIGHT, ctx.col_fg);
+			gp_fill_rect_xywh(pixmap, p, cur_y, w-2*p, eh, heading_bg);
+			gp_rect_xywh(pixmap, p, cur_y, w-2*p, eh, frame_col);
 		}
 
 		menu->draw_entry(idx, pixmap, fg, bg, p2, cur_y+p, w-2*p2, eh);

@@ -36,9 +36,25 @@ struct neko_ctx {
 	 */
 	gp_pixel col_bg;
 	/**
-	 * @brief A selected color.
+	 * @brief A selected menu color.
 	 */
 	gp_pixel col_sel;
+	/**
+	 * @brief Focused out menu bg color.
+	 */
+	gp_pixel col_fout_bg;
+	/**
+	 * @brief Focused in menu bg color.
+	 */
+	gp_pixel col_fin_bg;
+	/**
+	 * @brief Focused out frame color.
+	 */
+	gp_pixel col_fout_fr;
+	/**
+	 * @brief Focused in frame color.
+	 */
+	gp_pixel col_fin_fr;
 
 	/**
 	 * @brief Neko theme.

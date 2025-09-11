@@ -49,18 +49,37 @@ void neko_ctx_init(gp_backend *backend, enum neko_theme theme, const char *font_
 	switch (gp_pixel_size(backend->pixmap->pixel_type)) {
 	case 1:
 		ctx.col_sel = ctx.col_bg;
+		ctx.col_fout_bg = ctx.col_bg;
+		ctx.col_fin_bg = ctx.col_bg;
+		ctx.col_fin_fr = ctx.col_fg;
+		ctx.col_fout_fr = ctx.col_fg;
 	break;
 	case 2:
-		if (ctx.theme == NEKO_THEME_DARK)
+		if (ctx.theme == NEKO_THEME_DARK) {
 			ctx.col_sel = gp_rgb_to_pixmap_pixel(0x40, 0x40, 0x40, backend->pixmap);
-		else
+			ctx.col_fout_fr = gp_rgb_to_pixmap_pixel(0x80, 0x80, 0x80, backend->pixmap);
+		} else {
 			ctx.col_sel = gp_rgb_to_pixmap_pixel(0x80, 0x80, 0x80, backend->pixmap);
+			ctx.col_fout_fr = gp_rgb_to_pixmap_pixel(0x40, 0x40, 0x40, backend->pixmap);
+		}
+
+		ctx.col_fout_bg = ctx.col_bg;
+		ctx.col_fin_bg = ctx.col_sel;
+		ctx.col_fin_fr = ctx.col_fg;
 	break;
 	default:
-		if (ctx.theme == NEKO_THEME_LIGHT)
+		if (ctx.theme == NEKO_THEME_LIGHT) {
 			ctx.col_sel = gp_rgb_to_pixmap_pixel(0x6f, 0xa5, 0xd4, backend->pixmap);
-		else
-			ctx.col_sel = gp_rgb_to_pixmap_pixel(0x22, 0x22, 0x3a, backend->pixmap);
+			ctx.col_fout_bg = gp_rgb_to_pixmap_pixel(0xcc, 0xcc, 0xcc, backend->pixmap);
+			ctx.col_fin_fr = gp_rgb_to_pixmap_pixel(0x4f, 0x85, 0xb4, backend->pixmap);
+		} else {
+			ctx.col_sel = gp_rgb_to_pixmap_pixel(0x22, 0x2b, 0x3f, backend->pixmap);
+			ctx.col_fout_bg = gp_rgb_to_pixmap_pixel(0x1f, 0x1f, 0x1f, backend->pixmap);
+			ctx.col_fin_fr = gp_rgb_to_pixmap_pixel(0x32, 0x32, 0x4a, backend->pixmap);
+		}
+
+		ctx.col_fin_bg = ctx.col_sel;
+		ctx.col_fout_fr = ctx.col_fout_bg;
 	break;
 	}
 
