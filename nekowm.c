@@ -266,6 +266,40 @@ static enum neko_theme str_to_theme(const char *theme)
 		return NEKO_THEME_INVALID;
 }
 
+static void show_logo(gp_backend *backend)
+{
+	neko_logo_render(backend->pixmap, &neko_logo_text, 0);
+	gp_backend_flip(backend);
+
+	gp_event *ev;
+	unsigned int cnt = 1000;
+
+	while (cnt) {
+		ev = gp_backend_ev_poll(backend);
+		if (!ev) {
+			cnt--;
+			usleep(1000);
+			continue;
+		}
+
+		switch (ev->type) {
+		case GP_EV_SYS:
+			switch (ev->code) {
+			case GP_EV_SYS_RESIZE:
+				gp_backend_resize_ack(backend);
+				neko_logo_render(backend->pixmap, &neko_logo_text, 0);
+				gp_backend_flip(backend);
+			break;
+			case GP_EV_SYS_QUIT:
+				gp_backend_exit(backend);
+				exit(0);
+			break;
+			}
+		break;
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int opt;
@@ -358,9 +392,7 @@ int main(int argc, char *argv[])
 
 	neko_ctx_init(backend, theme, cfg.font_family);
 
-	neko_logo_render(backend->pixmap, &neko_logo_text, 0);
-	gp_backend_flip(backend);
-	sleep(1);
+	show_logo(backend);
 
 	gp_size w = gp_pixmap_w(backend->pixmap);
 	gp_size h = gp_pixmap_h(backend->pixmap);
