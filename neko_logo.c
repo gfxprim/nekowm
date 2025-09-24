@@ -29,28 +29,12 @@ struct rgb dark_rgb_palette[] = {
 	{0x83, 0x23, 0x23},
 };
 
-struct rgb dark_1bpp_palette[] = {
-	{0x00, 0x00, 0x00},
-	{0xff, 0xff, 0xff},
-	{0x00, 0x00, 0x00},
-	{0x00, 0x00, 0x00},
-	{0xff, 0xff, 0xff},
-};
-
 struct rgb dark_2bpp_palette[] = {
 	{0x00, 0x00, 0x00},
 	{0xff, 0xff, 0xff},
 	{0x40, 0x40, 0x40},
 	{0x40, 0x40, 0x40},
 	{0x80, 0x80, 0x80},
-};
-
-struct rgb light_1bpp_palette[] = {
-	{0xff, 0xff, 0xff},
-	{0x00, 0x00, 0x00},
-	{0xff, 0xff, 0xff},
-	{0xff, 0xff, 0xff},
-	{0x00, 0x00, 0x00},
 };
 
 struct rgb light_2bpp_palette[] = {
@@ -69,10 +53,20 @@ static gp_pixel *get_palette(gp_pixel_type pixel_type)
 
 	switch (gp_pixel_size(pixel_type)) {
 	case 1:
-		if (ctx.theme == NEKO_THEME_DARK)
-			palette = dark_1bpp_palette;
-		else
-			palette = light_1bpp_palette;
+		if (ctx.theme == NEKO_THEME_DARK) {
+			ret[0] = 0x00;
+			ret[1] = 0x01;
+			ret[2] = GP_PIXEL_PATTERN_50;
+			ret[3] = GP_PIXEL_PATTERN_50;
+			ret[4] = 0x01;
+		} else {
+			ret[0] = 0x01;
+			ret[1] = 0x00;
+			ret[2] = GP_PIXEL_PATTERN_50;
+			ret[3] = GP_PIXEL_PATTERN_50;
+			ret[4] = 0x00;
+		}
+		return ret;
 	break;
 	case 2:
 		if (ctx.theme == NEKO_THEME_DARK)

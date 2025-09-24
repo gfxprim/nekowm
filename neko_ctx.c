@@ -52,7 +52,7 @@ void neko_ctx_init(gp_backend *backend, enum neko_theme theme, const char *font_
 		ctx.col_fout_bg = ctx.col_bg;
 		ctx.col_fin_bg = ctx.col_bg;
 		ctx.col_fin_fr = ctx.col_fg;
-		ctx.col_fout_fr = ctx.col_fg;
+		ctx.col_fout_fr = GP_PIXEL_PATTERN_50;
 	break;
 	case 2:
 		if (ctx.theme == NEKO_THEME_DARK) {
