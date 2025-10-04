@@ -56,15 +56,15 @@ static gp_pixel *get_palette(gp_pixel_type pixel_type)
 		if (ctx.theme == NEKO_THEME_DARK) {
 			ret[0] = 0x00;
 			ret[1] = 0x01;
-			ret[2] = GP_PIXEL_PATTERN_50;
-			ret[3] = GP_PIXEL_PATTERN_50;
-			ret[4] = 0x01;
+			ret[2] = gp_pixel_pattern(1, 0, GP_PIXEL_PATTERN_DOTS_25);
+			ret[3] = gp_pixel_pattern(1, 0, GP_PIXEL_PATTERN_DOTS_75);
+			ret[4] = gp_pixel_pattern(1, 0, GP_PIXEL_PATTERN_50);
 		} else {
 			ret[0] = 0x01;
 			ret[1] = 0x00;
-			ret[2] = GP_PIXEL_PATTERN_50;
-			ret[3] = GP_PIXEL_PATTERN_50;
-			ret[4] = 0x00;
+			ret[2] = gp_pixel_pattern(1, 0, GP_PIXEL_PATTERN_DOTS_75);
+			ret[3] = gp_pixel_pattern(1, 0, GP_PIXEL_PATTERN_DOTS_25);
+			ret[4] = gp_pixel_pattern(1, 0, GP_PIXEL_PATTERN_50);
 		}
 		return ret;
 	break;
