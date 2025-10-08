@@ -23,6 +23,7 @@
 #include "neko_view_exit.h"
 #include "neko_logo.h"
 
+static volatile int sig_exit;
 static gp_backend *backend;
 
 /** @brief A list of application connected to the proxy backend. */
@@ -300,6 +301,13 @@ static void show_logo(gp_backend *backend)
 	}
 }
 
+static void trigger_exit(int signal)
+{
+	(void)signal;
+
+	sig_exit = 1;
+}
+
 int main(int argc, char *argv[])
 {
 	int opt;
@@ -321,6 +329,8 @@ int main(int argc, char *argv[])
 	}
 
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGTERM, trigger_exit);
+	signal(SIGINT, trigger_exit);
 
 	while ((opt = getopt(argc, argv, "b:f:hr:t:")) != -1) {
 	switch (opt) {
@@ -448,6 +458,8 @@ int main(int argc, char *argv[])
 
 	for (;;) {
 		gp_backend_wait(backend);
+		if (sig_exit)
+			do_exit(NEKO_VIEW_EXIT_QUIT);
 		backend_event(backend);
 	}
 
