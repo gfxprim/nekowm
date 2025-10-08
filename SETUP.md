@@ -53,7 +53,7 @@ a user with:
 
 ```
 systemctl enable --user nekowm
-loginctl enable-linger user
+sudo loginctl enable-linger user
 ```
 
 Or you can enable the NekoWM login daemon with:
