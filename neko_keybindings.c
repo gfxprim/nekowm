@@ -14,6 +14,7 @@
 #include <utils/gp_json.h>
 #include <input/gp_keys.h>
 
+#include "neko_app_launcher.h"
 #include "neko_keybindings.h"
 
 struct neko_keybinding neko_keybindings[] = {
@@ -57,6 +58,123 @@ static void set_keybinding(gp_json_reader *json, const char *key_name, const cha
 	neko_keybindings[i].key = key;
 }
 
+enum run_type {
+	RUN_APP,
+	RUN_CMD,
+};
+
+#define RUN_MAX 16
+
+struct run {
+	union {
+		char app_name[32];
+		char *cmdline;
+	};
+	enum run_type type;
+	uint32_t key;
+};
+
+static struct run apps[RUN_MAX] = {
+	[0] = {.app_name = "Termini", .type = RUN_APP, .key = GP_KEY_ENTER}
+};
+static unsigned int apps_cnt = 1;
+
+int neko_process_keybindings(uint32_t key)
+{
+	unsigned int i;
+
+	for (i = 0; i < apps_cnt; i++) {
+		if (apps[i].key == key) {
+			switch (apps[i].type) {
+			case RUN_APP:
+				neko_app_run(apps[i].app_name);
+				return 1;
+			case RUN_CMD:
+				neko_cmd_run(apps[i].cmdline);
+				return 1;
+			default:
+			break;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static void parse_run_app(gp_json_reader *json, gp_json_val *val, enum run_type type)
+{
+	struct run *app;
+	int key_set = 0;
+	int run_set = 0;
+
+	if (apps_cnt >= RUN_MAX) {
+		gp_json_warn(json, "Too many apps and cmdlines defined!");
+		gp_json_obj_skip(json);
+		return;
+	}
+
+	app = apps + apps_cnt;
+
+	memset(app, 0, sizeof(*app));
+
+	app->type = type;
+
+	GP_JSON_OBJ_FOREACH(json, val) {
+		if (val->type != GP_JSON_STR) {
+			gp_json_err(json, "Invalid value type, expected string.");
+			return;
+		}
+
+		if (app->type == RUN_APP && !strcmp(val->id, "App_Name")) {
+			if (strlen(val->val_str) + 1 >= sizeof(app->app_name)) {
+				gp_json_err(json, "App name too long");
+				return;
+			}
+
+			strcpy(app->app_name, val->val_str);
+			run_set = 1;
+		} else if (!strcmp(val->id, "Key")) {
+			int key = gp_ev_key_val(val->val_str);
+			if (key < 0) {
+				gp_json_err(json, "Invalid key name");
+				return;
+			}
+			app->key = key;
+			key_set = 1;
+		} else if (app->type == RUN_CMD && !strcmp(val->id, "Cmdline")) {
+			app->cmdline = strdup(val->val_str);
+			if (!app->cmdline) {
+				gp_json_warn(json, "strdup() failed");
+				return;
+			}
+			run_set = 1;
+		} else {
+			gp_json_err(json, "Wrong key, expected either 'App_Name' or 'Key'");
+			return;
+		}
+	}
+
+	if (!key_set || !run_set) {
+		gp_json_warn(json, "Incomplete App or Cmdline!");
+		if (app->type == RUN_CMD)
+			free(app->cmdline);
+		return;
+	}
+
+	switch (app->type) {
+	case RUN_APP:
+		GP_DEBUG(1, "App '%s' keybinding is Mod_WM+%s",
+		         app->app_name, gp_ev_key_name(app->key));
+	break;
+	case RUN_CMD:
+		GP_DEBUG(1, "Cmdline '%s' keybinding is Mod_WM+%s",
+		         app->cmdline, gp_ev_key_name(app->key));
+	break;
+	}
+
+	apps_cnt++;
+}
+
 void neko_load_keybindings(void)
 {
 	char *path = gp_user_path(".config/nekowm/", "keybindings.json");
@@ -81,6 +199,16 @@ void neko_load_keybindings(void)
 	GP_DEBUG(1, "Loading keybindings from '%s'", path);
 
 	GP_JSON_OBJ_FOREACH(json, &val) {
+		if (val.type == GP_JSON_OBJ && !strcmp(val.id, "Run_App")) {
+			parse_run_app(json, &val, RUN_APP);
+			continue;
+		}
+
+		if (val.type == GP_JSON_OBJ && !strcmp(val.id, "Run_Cmd")) {
+			parse_run_app(json, &val, RUN_CMD);
+			continue;
+		}
+
 		if (val.type != GP_JSON_STR) {
 			gp_json_err(json, "Invalid value type, expected string.");
 			goto err;

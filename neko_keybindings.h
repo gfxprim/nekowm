@@ -104,4 +104,12 @@ enum neko_keybindings_idx {
  */
 void neko_load_keybindings(void);
 
+/**
+ * @brief Processes global keybindings.
+ *
+ * @param key A key that was pressed.
+ * @return Non-zero if key was matched.
+ */
+int neko_process_keybindings(uint32_t key);
+
 #endif /* NEKO_KEYBINDINGS_H */

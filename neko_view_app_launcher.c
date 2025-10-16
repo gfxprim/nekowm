@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: GPL-2.0-or-later
 /*
 
-   Copyright (c) 2019-2024 Cyril Hrubis <metan@ucw.cz>
+   Copyright (c) 2019-2025 Cyril Hrubis <metan@ucw.cz>
 
  */
 
@@ -15,6 +15,7 @@
 
 #include "neko_menu.h"
 #include "neko_ctx.h"
+#include "neko_app_launcher.h"
 #include "neko_view_app_launcher.h"
 
 struct apps {
@@ -49,6 +50,52 @@ static void load_app_list(void)
 	strcpy(apps[2].name, "Music Player");
 	strcpy(apps[2].cmdline, "gpplayer -b proxy");
 	apps[2].icon = NULL;
+}
+
+void neko_cmd_run(char *cmdline)
+{
+	int pid = fork();
+	if (pid < 0)
+		return;
+
+	if (pid == 0) {
+		unsigned int i = 0;
+		char *opts[128] = {};
+
+		opts[0] = cmdline;
+
+		while (*cmdline) {
+			if (*cmdline == ' ') {
+				*cmdline = 0;
+
+				if (cmdline[1])
+					opts[++i] = cmdline+1;
+			}
+
+			cmdline++;
+
+			if (i >= 128)
+				break;
+		}
+
+		execvp(opts[0], opts);
+		exit(1);
+	}
+}
+
+static void run_app(struct apps *app)
+{
+	neko_cmd_run(app->cmdline);
+}
+
+void neko_app_run(const char *app_name)
+{
+	GP_VEC_FOREACH(apps, struct apps, app) {
+		if (!strcmp(app_name, app->name)) {
+			run_app(app);
+			return;
+		}
+	}
 }
 
 neko_view_slot *neko_app_launcher_init(void)
@@ -116,35 +163,7 @@ void neko_app_launcher_show(neko_view *view)
 
 static void run_selected_app(struct app_launcher *app_launcher)
 {
-	char *cmdline = apps[app_launcher->app_selected].cmdline;
-
-	int pid = fork();
-	if (pid < 0)
-		return;
-
-	if (pid == 0) {
-		unsigned int i = 0;
-		char *opts[128] = {};
-
-		opts[0] = cmdline;
-
-		while (*cmdline) {
-			if (*cmdline == ' ') {
-				*cmdline = 0;
-
-				if (cmdline[1])
-					opts[++i] = cmdline+1;
-			}
-
-			cmdline++;
-
-			if (i >= 128)
-				break;
-		}
-
-		execvp(opts[0], opts);
-		exit(1);
-	}
+	run_app(&apps[app_launcher->app_selected]);
 }
 
 static void selected_up(neko_view *view, struct app_launcher *app_launcher)

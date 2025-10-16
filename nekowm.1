@@ -112,6 +112,17 @@ Certain key combinations are hardcoded these are:
 .IP \(bu 2
 "WM_Mod" + F1..F12 that switches between views (virtual screens)
 
+.PP
+There are two more actions that can be bind to a WM_Mod+Key keyboard
+shortcuts. These are applications and commandlines, the difference is that
+applications are looked up by name that is usally shown in the application
+launcher, while cmdline is something that is executed by exec() directly. See
+example configuration below.
+
+.PP
+The default setttings maps WM_Mod+KeyEnter is to start the Termini terminal
+emulator application.
+
 .SS Configuration file
 Keybindings can be changed in \fB$HOME/.config/nekowm/keybindings.json\fR configuration file.
 
@@ -122,6 +133,8 @@ Example:
 {
  "WM_Mod": "KeyLeftAlt",
  "View_Left": "KeyLeftBrace",
- "View_Right": "KeyRighttBrace"
+ "View_Right": "KeyRighttBrace",
+ "Run_App": {"App_Name": "Termini", "Key": "KeyEnter"},
+ "Run_Cmd": {"Cmdline": "sync", "Key": "KeyS"}
 }
 .EE

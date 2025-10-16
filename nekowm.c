@@ -99,7 +99,9 @@ static void backend_event(gp_backend *b)
 			if (!gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
 				break;
 
-			if (ev->key.key == NEKO_KEYS_EXIT) {
+			if (neko_process_keybindings(ev->key.key)) {
+				return;
+			} else if (ev->key.key == NEKO_KEYS_EXIT) {
 				do_exit(NEKO_VIEW_EXIT_QUIT);
 			} else if (ev->key.key == NEKO_KEYS_POWEROFF) {
 				do_exit(NEKO_VIEW_EXIT_POWEROFF);
