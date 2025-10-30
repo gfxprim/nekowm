@@ -96,7 +96,7 @@ static void exit_show(neko_view *self)
 	neko_view_flip(self);
 
 	if (!neko_view_app_cnt() || timeout <= 0) {
-		gp_backend_timer_rem(ctx.backend, &exit_timer);
+		gp_backend_timer_stop(ctx.backend, &exit_timer);
 		sleep(1);
 		switch (exit_type) {
 		case NEKO_VIEW_EXIT_POWEROFF:
@@ -171,7 +171,7 @@ neko_view_slot *neko_view_exit_init(enum neko_view_exit_type type)
 
 	exit_type = type;
 
-	gp_backend_timer_add(ctx.backend, &exit_timer);
+	gp_backend_timer_start(ctx.backend, &exit_timer);
 
 	return &exit_slot;
 }
