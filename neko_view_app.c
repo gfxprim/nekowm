@@ -173,7 +173,7 @@ static void app_event(neko_view *self, gp_event *ev)
 	break;
 	}
 
-	if ((ev->type == GP_EV_KEY || ev->type == GP_EV_UTF) &&
+	if ((ev->type == GP_EV_KEY) &&
 	    gp_ev_any_key_pressed(ev, NEKO_KEYS_MOD_WM))
 		return;
 
