@@ -147,11 +147,13 @@ static void backend_event(gp_backend *b)
 				wm_is_focused = ev->val;
 				neko_view_event(&main_views[cur_view], ev);
 			break;
-			case GP_EV_SYS_VISIBILITY:
+			case GP_EV_SYS_RENDER_STOP:
+				gp_backend_render_stopped(b);
 				return;
-			case GP_EV_SYS_RESIZE:
-				gp_backend_resize_ack(b);
-				resize_views(ev->sys.w, ev->sys.h);
+			case GP_EV_SYS_RENDER_START:
+				return;
+			case GP_EV_SYS_RENDER_RESIZE:
+				resize_views(ev->resize.w, ev->resize.h);
 				return;
 			}
 		break;
@@ -288,10 +290,12 @@ static void show_logo(gp_backend *backend)
 		switch (ev->type) {
 		case GP_EV_SYS:
 			switch (ev->code) {
-			case GP_EV_SYS_RESIZE:
-				gp_backend_resize_ack(backend);
+			case GP_EV_SYS_RENDER_START:
 				neko_logo_render(backend->pixmap, &neko_logo_text, 0);
 				gp_backend_flip(backend);
+			break;
+			case GP_EV_SYS_RENDER_STOP:
+				gp_backend_render_stopped(backend);
 			break;
 			case GP_EV_SYS_QUIT:
 				gp_backend_exit(backend);
